@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>VegaAsis.Core</RootNamespace>
+    <AssemblyName>VegaAsis.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Contracts\IAuthService.cs" />
+    <Compile Include="Contracts\IAppointmentService.cs" />
+    <Compile Include="Contracts\IAppSettingsService.cs" />
+    <Compile Include="Contracts\IOfferService.cs" />
+    <Compile Include="Contracts\ICompanySettingsService.cs" />
+    <Compile Include="Contracts\IPolicyService.cs" />
+    <Compile Include="Contracts\IQuotaSettingsService.cs" />
+    <Compile Include="Contracts\ISharedCompanyService.cs" />
+    <Compile Include="Contracts\IWebUserService.cs" />
+    <Compile Include="Contracts\IUserGroupService.cs" />
+    <Compile Include="Contracts\IUserManagementService.cs" />
+    <Compile Include="DTOs\AppointmentDto.cs" />
+    <Compile Include="DTOs\AppSettingsDto.cs" />
+    <Compile Include="DTOs\CompanySettingsDto.cs" />
+    <Compile Include="DTOs\GroupMemberDto.cs" />
+    <Compile Include="DTOs\OfferDto.cs" />
+    <Compile Include="DTOs\PolicyDto.cs" />
+    <Compile Include="DTOs\ProfileDto.cs" />
+    <Compile Include="DTOs\QuotaSettingsDto.cs" />
+    <Compile Include="DTOs\ReceivedCompanyShareDto.cs" />
+    <Compile Include="DTOs\SharedCompanyDto.cs" />
+    <Compile Include="DTOs\WebUserDto.cs" />
+    <Compile Include="DTOs\UserDataDto.cs" />
+    <Compile Include="DTOs\UserGroupDto.cs" />
+    <Compile Include="DTOs\UserSettingsDto.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Autofac">
+      <Version>5.2.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

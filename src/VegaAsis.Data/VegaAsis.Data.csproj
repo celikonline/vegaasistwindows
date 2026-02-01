@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>VegaAsis.Data</RootNamespace>
+    <AssemblyName>VegaAsis.Data</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework">
+      <HintPath>$(NuGetPackageRoot)entityframework\6.4.4\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EntityFramework">
+      <Version>6.4.4</Version>
+    </PackageReference>
+    <PackageReference Include="EntityFramework6.Npgsql">
+      <Version>6.4.3</Version>
+    </PackageReference>
+    <PackageReference Include="Npgsql">
+      <Version>4.1.11</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Entities\Appointment.cs" />
+    <Compile Include="Entities\AppSettings.cs" />
+    <Compile Include="Entities\CompanySettings.cs" />
+    <Compile Include="Entities\GroupMember.cs" />
+    <Compile Include="Entities\Offer.cs" />
+    <Compile Include="Entities\Policy.cs" />
+    <Compile Include="Entities\Profile.cs" />
+    <Compile Include="Entities\QuotaSettings.cs" />
+    <Compile Include="Entities\ReceivedCompanyShare.cs" />
+    <Compile Include="Entities\SharedCompany.cs" />
+    <Compile Include="Entities\UserGroup.cs" />
+    <Compile Include="Entities\UserRole.cs" />
+    <Compile Include="Entities\UserSettings.cs" />
+    <Compile Include="Entities\WebUser.cs" />
+    <Compile Include="Services\AppointmentService.cs" />
+    <Compile Include="Services\AppSettingsService.cs" />
+    <Compile Include="Services\AuthService.cs" />
+    <Compile Include="Services\CompanySettingsService.cs" />
+    <Compile Include="Services\OfferService.cs" />
+    <Compile Include="Services\PolicyService.cs" />
+    <Compile Include="Services\QuotaSettingsService.cs" />
+    <Compile Include="Services\SharedCompanyService.cs" />
+    <Compile Include="Services\WebUserService.cs" />
+    <Compile Include="Services\UserGroupService.cs" />
+    <Compile Include="Services\UserManagementService.cs" />
+    <Compile Include="VegaAsisDbContext.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VegaAsis.Core\VegaAsis.Core.csproj">
+      <Project>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</Project>
+      <Name>VegaAsis.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

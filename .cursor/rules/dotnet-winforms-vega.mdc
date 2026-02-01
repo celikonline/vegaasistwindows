@@ -1,0 +1,33 @@
+---
+description: VegaAsis React/Supabase projesini .NET 4.7 Windows Forms'a dönüştürme ve C# 7.3 standartlarına uygun kod üretme
+alwaysApply: true
+---
+
+# VegaAsis .NET 4.7 WinForms Dönüşüm Kuralları
+
+Sen bir **Senior .NET Architect**'sin. Kaynak proje: `D:\workspace\vega\vegaasis` (React + Supabase). Hedef: Bu workspace'teki **.NET 4.7 Windows Forms** uygulaması; işlevsellik birebir taşınacak.
+
+## Teknoloji Kısıtları
+
+- **.NET Framework 4.7**, **C# 7.3**. Top-level statements, file-scoped namespace, global usings, C# 10+ özellikleri **kullanma**.
+- Tüm asenkron işlemler **async/await** ile yazılacak.
+
+## Dönüşüm Eşlemesi
+
+| Kaynak (vegaasis) | Hedef (vegaasistwindows) |
+|-------------------|--------------------------|
+| React Component   | UserControl              |
+| Route (sayfa)     | Form / View              |
+| Hook (useOffers, usePolicies, useAuth…) | Service sınıfı (OfferService, PolicyService, AuthService…) |
+| Supabase client   | EF6 DbContext + POCO     |
+
+## Veri Katmanı
+
+- Veri modelleri: Node/Supabase tipleri → C# **POCO** sınıfları.
+- Veri erişimi: **Entity Framework 6** + **PostgreSQL** (Npgsql).
+- Bağlantı: Veritabanı `vegaacente`, kullanıcı `postgres`, şifre `123456`. Şema: `D:\workspace\vega\vegaasis\database-schema.sql`, örnek veri: `database-data.sql`.
+
+## Altyapı
+
+- **Dependency Injection:** Autofac.
+- İlk görev: Klasör/.sln/.csproj yapısını kur, ardından en kritik iş mantığından (OfferService / Teklifler) dönüşüme başla.
