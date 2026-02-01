@@ -34,6 +34,7 @@ namespace VegaAsis.Windows.Models
         public string TrafikPoliceNo { get; set; }
         public DateTime? TrafikBaslangicTarihi { get; set; }
         public DateTime? TrafikBitisTarihi { get; set; }
+        public bool KisaVadeliPolice { get; set; }
 
         public SorguSession()
         {
@@ -65,6 +66,7 @@ namespace VegaAsis.Windows.Models
             TrafikPoliceNo = null;
             TrafikBaslangicTarihi = null;
             TrafikBitisTarihi = null;
+            KisaVadeliPolice = false;
         }
     }
 }

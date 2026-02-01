@@ -89,6 +89,15 @@ namespace VegaAsis.Windows.UserControls
         private void LoadCompanyData()
         {
             _companyData = GetCompanyData();
+            _companyGrid.SelectionChanged -= CompanyGrid_SelectionChanged;
+            _companyGrid.SelectionChanged += CompanyGrid_SelectionChanged;
+            RefreshCompanyGrid();
+            RefreshSelectedCompanyPanel();
+        }
+
+        private void RefreshCompanyGrid()
+        {
+            if (_companyGrid == null || _companyData == null) return;
             _companyGrid.Rows.Clear();
             foreach (var c in _companyData)
             {
@@ -97,10 +106,21 @@ namespace VegaAsis.Windows.UserControls
                 var idx = _companyGrid.Rows.Add(false, c.Name, trafikStr, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", yuzdeStr, c.Warning ?? "");
                 var row = _companyGrid.Rows[idx];
                 row.Cells["Secim"].Value = c.Price.HasValue;
-                row.Tag = c;
+                row.Tag = new RowTag { Company = c, SubPrice = null };
+
+                if (_allExpanded && c.SubPrices != null && c.SubPrices.Length > 0)
+                {
+                    foreach (var sp in c.SubPrices)
+                    {
+                        var spTrafik = sp.Price.ToString("N2", new CultureInfo("tr-TR"));
+                        var subIdx = _companyGrid.Rows.Add(false, "  \u2192 " + (sp.Branch ?? sp.Product), spTrafik, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "", sp.Description ?? "");
+                        var subRow = _companyGrid.Rows[subIdx];
+                        subRow.Tag = new RowTag { Company = c, SubPrice = sp };
+                        subRow.DefaultCellStyle.BackColor = Color.FromArgb(252, 252, 252);
+                        subRow.DefaultCellStyle.ForeColor = Color.Gray;
+                    }
+                }
             }
-            _companyGrid.SelectionChanged += CompanyGrid_SelectionChanged;
-            RefreshSelectedCompanyPanel();
         }
 
         private void CompanyGrid_SelectionChanged(object sender, EventArgs e)
@@ -164,6 +184,11 @@ namespace VegaAsis.Windows.UserControls
             DateTime dt;
             if (DateTime.TryParse(GetText("DogumTarihi"), out dt))
                 _sorguSession.DogumTarihi = dt;
+            if (DateTime.TryParse(GetText("TrafikBaslangicTarihi"), out dt))
+                _sorguSession.TrafikBaslangicTarihi = dt;
+            if (DateTime.TryParse(GetText("TrafikBitisTarihi"), out dt))
+                _sorguSession.TrafikBitisTarihi = dt;
+            _sorguSession.KisaVadeliPolice = GetCheckBoxValue("KisaVadeli");
         }
 
         private void LoadFromSession()
@@ -183,7 +208,24 @@ namespace VegaAsis.Windows.UserControls
             SetCombo("TrafikSigortaSirketi", "Seçiniz");
             SetText("TrafikAcenteKodu", "");
             SetText("TrafikPoliceNo", "");
+            SetText("TrafikBaslangicTarihi", _sorguSession.TrafikBaslangicTarihi.HasValue ? _sorguSession.TrafikBaslangicTarihi.Value.ToString("dd.MM.yyyy") : "");
+            SetText("TrafikBitisTarihi", _sorguSession.TrafikBitisTarihi.HasValue ? _sorguSession.TrafikBitisTarihi.Value.ToString("dd.MM.yyyy") : "");
             SetText("DogumTarihi", "");
+            SetCheckBoxValue("KisaVadeli", _sorguSession.KisaVadeliPolice);
+        }
+
+        private bool GetCheckBoxValue(string key)
+        {
+            var c = _formFields.ContainsKey(key) ? _formFields[key] : null;
+            var chk = c as CheckBox;
+            return chk != null && chk.Checked;
+        }
+
+        private void SetCheckBoxValue(string key, bool value)
+        {
+            var c = _formFields.ContainsKey(key) ? _formFields[key] : null;
+            var chk = c as CheckBox;
+            if (chk != null) chk.Checked = value;
         }
 
         private string GetText(string key)
@@ -224,20 +266,24 @@ namespace VegaAsis.Windows.UserControls
         private void CompanyGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
-            var col = _companyGrid.Columns[e.ColumnIndex];
             var row = _companyGrid.Rows[e.RowIndex];
-            var company = row.Tag as CompanyRow;
+            var tag = row.Tag as RowTag;
+            if (tag == null) return;
+            var company = tag.Company;
             var companyName = company?.Name ?? row.Cells["Sirket"]?.Value?.ToString();
+            var col = _companyGrid.Columns[e.ColumnIndex];
 
             string branch = null;
             if (col.Name == "Trafik") branch = "TRAFİK";
             else if (col.Name == "Kasko") branch = "KASKO";
-            else if (col.Name == "TssAy") branch = "TSS";
-            else if (col.Name == "TssYat") branch = "TSS";
+            else if (col.Name == "Sbm") branch = "SBM";
+            else if (col.Name == "TssAy" || col.Name == "TssYat") branch = "TSS";
             else if (col.Name == "Konut") branch = "KONUT";
             else if (col.Name == "Dask") branch = "DASK";
             else if (col.Name == "Imm") branch = "İMM";
 
+            if (string.IsNullOrEmpty(branch) && tag.SubPrice != null)
+                branch = tag.SubPrice.Branch ?? tag.SubPrice.Product;
             if (!string.IsNullOrEmpty(branch) && BranchCellClickRequested != null)
             {
                 BranchCellClickRequested.Invoke(this, new BranchCellClickEventArgs(branch, companyName ?? ""));
@@ -248,8 +294,10 @@ namespace VegaAsis.Windows.UserControls
         {
             if (e.RowIndex < 0) return;
             var row = _companyGrid.Rows[e.RowIndex];
-            var company = row.Tag as CompanyRow;
-            if (company == null) return;
+            var tag = row.Tag as RowTag;
+            if (tag == null) return;
+            if (tag.SubPrice != null) return;
+            var company = tag.Company;
 
             var activeBranch = _cmbPolicyType?.SelectedItem as string;
             var unavailable = company.UnavailableBranches != null && !string.IsNullOrEmpty(activeBranch) &&
@@ -264,6 +312,34 @@ namespace VegaAsis.Windows.UserControls
                     e.CellStyle.ForeColor = Color.Gray;
                 }
             }
+            else
+            {
+                var colName = _companyGrid.Columns[e.ColumnIndex].Name;
+                var branchForColumn = GetBranchForColumn(colName);
+                if (branchForColumn != null && company.UnavailableBranches != null &&
+                    company.UnavailableBranches.Any(b => string.Equals(b, branchForColumn, StringComparison.OrdinalIgnoreCase)))
+                {
+                    e.CellStyle.Font = new Font(_companyGrid.Font, FontStyle.Strikeout);
+                    e.CellStyle.ForeColor = Color.Gray;
+                }
+            }
+        }
+
+        private static string GetBranchForColumn(string columnName)
+        {
+            if (string.IsNullOrEmpty(columnName)) return null;
+            switch (columnName)
+            {
+                case "Trafik": return "TRAFİK";
+                case "Sbm": return "SBM";
+                case "Kasko": return "KASKO";
+                case "TssAy":
+                case "TssYat": return "TSS";
+                case "Konut": return "KONUT";
+                case "Dask": return "DASK";
+                case "Imm": return "İMM";
+                default: return null;
+            }
         }
 
         public void AddCompany(string companyName)
@@ -277,7 +353,7 @@ namespace VegaAsis.Windows.UserControls
             _companyData.Add(newCompany);
             var idx = _companyGrid.Rows.Add(false, name, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "%0", "");
             var row = _companyGrid.Rows[idx];
-            row.Tag = newCompany;
+            row.Tag = new RowTag { Company = newCompany, SubPrice = null };
         }
 
         private void RefreshSelectedCompanyPanel()
@@ -290,7 +366,8 @@ namespace VegaAsis.Windows.UserControls
                 return;
             }
             var row = _companyGrid.SelectedRows[0];
-            var company = row.Tag as CompanyRow;
+            var tag = row.Tag as RowTag;
+            var company = tag?.Company;
             if (company == null)
             {
                 _selectedCompanyPanel.Controls.Add(new Label { Text = "Şirket seçin", Font = new Font("Segoe UI", 9F), ForeColor = Color.Gray, Location = new Point(8, 24) });
@@ -372,12 +449,19 @@ namespace VegaAsis.Windows.UserControls
             public SubPriceRow[] SubPrices { get; set; }
         }
 
+        private class RowTag
+        {
+            public CompanyRow Company { get; set; }
+            public SubPriceRow SubPrice { get; set; }
+        }
+
         private void BuildTopHeader()
         {
             var topHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 52,
+                Height = 88,
+                MinimumSize = new Size(0, 52),
                 BackColor = Color.White,
                 Padding = new Padding(8, 4, 8, 4)
             };
@@ -428,7 +512,8 @@ namespace VegaAsis.Windows.UserControls
                 AutoSize = true,
                 FlowDirection = FlowDirection.RightToLeft,
                 Dock = DockStyle.Right,
-                Padding = new Padding(0, 8, 8, 0)
+                Padding = new Padding(0, 8, 8, 0),
+                WrapContents = true
             };
             var btnGiris = new Button
             {
@@ -506,6 +591,7 @@ namespace VegaAsis.Windows.UserControls
             var chkWebServis = new CheckBox { Text = "Web Servis Teklifi Çalış", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
             var chkKasko = new CheckBox { Text = "Kasko Özel Fiyat", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
             var chkKisaVadeli = new CheckBox { Text = "Kısa Vadeli Poliçe Çalış", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
+            _formFields["KisaVadeli"] = chkKisaVadeli;
             _cmbTarayici = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Margin = new Padding(0, 6, 12, 0) };
             _cmbTarayici.Items.Add("Tarayıcı 1");
             _cmbTarayici.Items.Add("Tarayıcı 2");
@@ -523,6 +609,8 @@ namespace VegaAsis.Windows.UserControls
             {
                 _allExpanded = !_allExpanded;
                 _btnDigierFiyatlar.Text = _allExpanded ? "Diğer Fiyatları Gizle" : "Diğer Fiyatları Göster";
+                RefreshCompanyGrid();
+                RefreshSelectedCompanyPanel();
             };
 
             var btnSirketEkle = new Button
@@ -605,8 +693,10 @@ namespace VegaAsis.Windows.UserControls
             _companyGrid.Columns.Add("Dask", "Dask");
             _companyGrid.Columns.Add("Imm", "IMM");
             _companyGrid.Columns.Add("Yuzde", "%");
-            var colUyari = new DataGridViewTextBoxColumn { Name = "Uyari", HeaderText = "Uyarı", MinimumWidth = 180 };
+            var colUyari = new DataGridViewTextBoxColumn { Name = "Uyari", HeaderText = "Uyarı", MinimumWidth = 220 };
             _companyGrid.Columns.Add(colUyari);
+            _companyGrid.Columns["Sirket"].FillWeight = 120;
+            _companyGrid.Columns["Uyari"].FillWeight = 180;
             _companyGrid.EnableHeadersVisualStyles = false;
             _companyGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240);
             _companyGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = _companyGrid.ColumnHeadersDefaultCellStyle.BackColor;
@@ -757,6 +847,8 @@ namespace VegaAsis.Windows.UserControls
             AddFormRowWithItems(tabTrafik, "Sigorta Şirketi", ref ty2, SigortaSirketleri.List, "TrafikSigortaSirketi");
             AddFormRow(tabTrafik, "Acente Kodu", "", ref ty2, fieldKey: "TrafikAcenteKodu");
             AddFormRow(tabTrafik, "Poliçe No", "", ref ty2, fieldKey: "TrafikPoliceNo");
+            AddFormRow(tabTrafik, "Başlangıç T.", "", ref ty2, fieldKey: "TrafikBaslangicTarihi");
+            AddFormRow(tabTrafik, "Bitiş T.", "", ref ty2, fieldKey: "TrafikBitisTarihi");
             AddFormRow(tabTrafik, "Kademe", "", ref ty2);
             AddFormRow(tabTrafik, "Hasarsızlık %", "", ref ty2);
             AddFormRowWithKalanGun(tabTrafik, ref ty2);
@@ -768,6 +860,7 @@ namespace VegaAsis.Windows.UserControls
             AddFormRow(tabKasko, "Acente Kodu", "", ref ty3);
             AddFormRow(tabKasko, "Poliçe No", "", ref ty3);
             AddFormRow(tabKasko, "Kademe", "", ref ty3);
+            AddFormRow(tabKasko, "Hasarsızlık %", "", ref ty3);
             AddFormRowWithKalanGun(tabKasko, ref ty3);
             AddFormRow(tabKasko, "Yenileme No", "", ref ty3);
             _aracBilgileriTabs.TabPages.Add(tabKasko);
@@ -796,7 +889,7 @@ namespace VegaAsis.Windows.UserControls
 
         private void AddFormRow(Control parent, string labelText, string value, ref int y, bool withCheck = false, string checkText = "", string secondCheckText = "", string secondText = "", bool isCombo = false, bool secondCombo = false, bool multiLine = false, string fieldKey = null, string fieldKey2 = null)
         {
-            var lbl = new Label { Text = labelText + ":", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lbl);
             Control input;
             if (isCombo)
@@ -843,7 +936,7 @@ namespace VegaAsis.Windows.UserControls
 
         private void AddFormRowWithItems(Control parent, string labelText, ref int y, string[] items, string fieldKey = null)
         {
-            var lbl = new Label { Text = labelText + ":", AutoSize = false, MinimumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lbl);
             var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 120, Top = y - 2, Width = 180 };
             if (items != null && items.Length > 0)
@@ -861,21 +954,21 @@ namespace VegaAsis.Windows.UserControls
 
         private void AddFormRowWithKalanGun(Control parent, ref int y)
         {
-            var lblBaslangic = new Label { Text = "Başlangıç T.:", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lblBaslangic = new Label { Text = "Başlangıç T.:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lblBaslangic);
             var txtBaslangic = new TextBox { Left = 120, Top = y - 2, Width = 180 };
             txtBaslangic.TextChanged += (s, e) => HesaplaKalanGun(parent);
             parent.Controls.Add(txtBaslangic);
             y += 28;
 
-            var lblBitis = new Label { Text = "Bitiş T.:", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lblBitis = new Label { Text = "Bitiş T.:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lblBitis);
             var txtBitis = new TextBox { Left = 120, Top = y - 2, Width = 180 };
             txtBitis.TextChanged += (s, e) => HesaplaKalanGun(parent);
             parent.Controls.Add(txtBitis);
             y += 28;
 
-            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lblKalan);
             var txtKalan = new TextBox { Left = 120, Top = y - 2, Width = 180, Text = "0", ReadOnly = true };
             parent.Controls.Add(txtKalan);
@@ -907,7 +1000,7 @@ namespace VegaAsis.Windows.UserControls
 
         private void AddFormRowMarkaTip(Control parent, ref int y, string fieldKeyMarka = null, string fieldKeyTip = null)
         {
-            var lblMarka = new Label { Text = "Marka:", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lblMarka = new Label { Text = "Marka:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lblMarka);
             var cmbMarka = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 120, Top = y - 2, Width = 180 };
             cmbMarka.Items.AddRange(VehicleBrandsAndTypes.GetBrandDisplays());
@@ -916,7 +1009,7 @@ namespace VegaAsis.Windows.UserControls
             if (!string.IsNullOrEmpty(fieldKeyMarka)) _formFields[fieldKeyMarka] = cmbMarka;
             y += 28;
 
-            var lblTip = new Label { Text = "Tip:", AutoSize = false, MinimumSize = new Size(110, 20), MaximumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lblTip = new Label { Text = "Tip:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lblTip);
             var cmbTip = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 120, Top = y - 2, Width = 180 };
             var brandDisplays = VehicleBrandsAndTypes.GetBrandDisplays();
@@ -943,7 +1036,7 @@ namespace VegaAsis.Windows.UserControls
 
         private void AddFormRowIlIlce(Control parent, ref int y)
         {
-            var lbl = new Label { Text = "İl / İlçe:", AutoSize = false, MinimumSize = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            var lbl = new Label { Text = "İl / İlçe:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
             parent.Controls.Add(lbl);
             _cmbIl = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = 120, Top = y - 2, Width = 120 };
             _cmbIl.Items.AddRange(TurkeyLocations.GetCityNames());

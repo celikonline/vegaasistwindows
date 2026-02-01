@@ -163,7 +163,8 @@ namespace VegaAsis.Windows
             indexControl.CanliDestekRequested += (s, e) => OpenForm(new CanliDestekForm());
             indexControl.BranchFormRequested += (s, branch) =>
             {
-                if (branch == "KASKO") OpenForm(new KaskoTeminatlariForm());
+                if (branch == "TRAFİK") OpenForm(new TrafikTeklifiForm());
+                else if (branch == "KASKO") OpenForm(new KaskoTeminatlariForm());
                 else if (branch == "TSS") OpenForm(new TssDetaylariForm());
                 else if (branch == "DASK" || branch == "KONUT") OpenForm(new DaskDetaylariForm());
                 else if (branch == "İMM") OpenForm(new ImmTeminatlariForm());
@@ -175,6 +176,7 @@ namespace VegaAsis.Windows
                 Form form = null;
                 if (branch == "TRAFİK") form = new TrafikTeklifiForm();
                 else if (branch == "KASKO") form = new KaskoTeminatlariForm();
+                else if (branch == "SBM") form = new SbmSorgusuForm();
                 else if (branch == "TSS") form = new TssDetaylariForm();
                 else if (branch == "DASK" || branch == "KONUT") form = new DaskDetaylariForm();
                 else if (branch == "İMM") form = new ImmTeminatlariForm();

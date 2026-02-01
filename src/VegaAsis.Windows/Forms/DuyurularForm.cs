@@ -1,7 +1,12 @@
 using System;
 using System.Data;
 using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Core.DTOs;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -13,10 +18,18 @@ namespace VegaAsis.Windows.Forms
         private Button _btnDuyuruGonder;
         private DataGridView _dgvDuyurular;
 
+        private IAnnouncementService _announcementService;
+        private IAuthService _authService;
+
         public DuyurularForm()
         {
             InitializeComponent();
-            LoadSampleData();
+            if (ServiceLocator.IsInitialized)
+            {
+                _announcementService = ServiceLocator.Resolve<IAnnouncementService>();
+                _authService = ServiceLocator.Resolve<IAuthService>();
+            }
+            Shown += DuyurularForm_Shown;
         }
 
         private void InitializeComponent()
@@ -55,16 +68,7 @@ namespace VegaAsis.Windows.Forms
                 Text = "Duyuru Gönder",
                 Width = 120
             };
-            _btnDuyuruGonder.Click += (s, e) =>
-            {
-                using (var form = new DuyuruGonderForm())
-                {
-                    if (form.ShowDialog(this) == DialogResult.OK)
-                    {
-                        MessageBox.Show(string.Format("Duyuru gönderildi: {0}\n(Entegrasyon bekleniyor)", form.Baslik), "Duyuru Gönder", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                }
-            };
+            _btnDuyuruGonder.Click += BtnDuyuruGonder_Click;
 
             // FlowLayoutPanel ile üst panel düzenlemesi
             var flowPanel = new FlowLayoutPanel
@@ -99,33 +103,110 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(mainPanel);
         }
 
+        private async void DuyurularForm_Shown(object sender, EventArgs e)
+        {
+            await LoadAnnouncementsAsync().ConfigureAwait(true);
+        }
+
+        private async Task LoadAnnouncementsAsync()
+        {
+            if (_announcementService == null)
+            {
+                LoadSampleData();
+                return;
+            }
+            try
+            {
+                var userId = _authService?.GetCurrentUserId;
+                var list = await _announcementService.GetAllAsync(userId).ConfigureAwait(true);
+                var table = new DataTable();
+                table.Columns.Add("Başlık", typeof(string));
+                table.Columns.Add("İçerik", typeof(string));
+                table.Columns.Add("Gönderen", typeof(string));
+                table.Columns.Add("Tarih", typeof(DateTime));
+                table.Columns.Add("Hedef", typeof(string));
+
+                IUserManagementService userMgmt = null;
+                if (ServiceLocator.IsInitialized)
+                {
+                    try { userMgmt = ServiceLocator.Resolve<IUserManagementService>(); }
+                    catch { /* optional */ }
+                }
+                foreach (var dto in list)
+                {
+                    var gonderen = "Sistem";
+                    if (dto.CreatedBy.HasValue && userMgmt?.Users != null)
+                    {
+                        var user = userMgmt.Users.FirstOrDefault(u => u.UserId == dto.CreatedBy.Value);
+                        if (user != null)
+                            gonderen = user.FullName ?? gonderen;
+                    }
+                    var icerikKisa = string.IsNullOrEmpty(dto.Content) ? "" : (dto.Content.Length > 80 ? dto.Content.Substring(0, 80) + "..." : dto.Content);
+                    table.Rows.Add(dto.Title, icerikKisa, gonderen, dto.CreatedAt, dto.TargetRole ?? "Tümü");
+                }
+
+                _dgvDuyurular.DataSource = table;
+                if (_dgvDuyurular.Columns.Count > 0)
+                {
+                    _dgvDuyurular.Columns["Tarih"].DefaultCellStyle.Format = "dd.MM.yyyy HH:mm";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Duyurular yüklenirken hata: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                LoadSampleData();
+            }
+        }
+
         private void LoadSampleData()
         {
             var table = new DataTable();
             table.Columns.Add("Başlık", typeof(string));
+            table.Columns.Add("İçerik", typeof(string));
             table.Columns.Add("Gönderen", typeof(string));
             table.Columns.Add("Tarih", typeof(DateTime));
-            table.Columns.Add("Okundu", typeof(bool));
-
-            // Örnek veriler
-            table.Rows.Add("Yeni Sistem Güncellemesi", "Sistem Yöneticisi", DateTime.Now.AddDays(-2), false);
-            table.Rows.Add("Toplantı Duyurusu", "Ahmet Yılmaz", DateTime.Now.AddDays(-5), true);
-            table.Rows.Add("Yıllık İzin Planlaması", "İnsan Kaynakları", DateTime.Now.AddDays(-7), false);
-            table.Rows.Add("Güvenlik Uyarısı", "Bilgi İşlem", DateTime.Now.AddDays(-1), true);
-
+            table.Columns.Add("Hedef", typeof(string));
             _dgvDuyurular.DataSource = table;
-
-            // Kolon başlıklarını ayarla
             if (_dgvDuyurular.Columns.Count > 0)
-            {
-                _dgvDuyurular.Columns["Başlık"].HeaderText = "Başlık";
-                _dgvDuyurular.Columns["Gönderen"].HeaderText = "Gönderen";
-                _dgvDuyurular.Columns["Tarih"].HeaderText = "Tarih";
-                _dgvDuyurular.Columns["Okundu"].HeaderText = "Okundu";
-
-                // Tarih kolonunu formatla
                 _dgvDuyurular.Columns["Tarih"].DefaultCellStyle.Format = "dd.MM.yyyy HH:mm";
+        }
+
+        private async void BtnDuyuruGonder_Click(object sender, EventArgs e)
+        {
+            using (var form = new DuyuruGonderForm())
+            {
+                if (form.ShowDialog(this) != DialogResult.OK)
+                    return;
+                if (_announcementService == null)
+                {
+                    MessageBox.Show("Duyuru servisi kullanılamıyor.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                var dto = new AnnouncementDto
+                {
+                    Title = form.Baslik,
+                    Content = form.Icerik,
+                    TargetRole = MapTargetRole(form.Alici)
+                };
+                try
+                {
+                    await _announcementService.CreateAsync(dto, _authService?.GetCurrentUserId).ConfigureAwait(true);
+                    await LoadAnnouncementsAsync().ConfigureAwait(true);
+                    MessageBox.Show(string.Format("Duyuru gönderildi: {0}", form.Baslik), "Duyuru Gönder", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Duyuru kaydedilirken hata: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
+        }
+
+        private static string MapTargetRole(string alici)
+        {
+            if (string.IsNullOrEmpty(alici)) return null;
+            if (alici.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0) return "admin";
+            if (alici.IndexOf("Gruplar", StringComparison.OrdinalIgnoreCase) >= 0) return "groups";
+            return null;
         }
     }
 }

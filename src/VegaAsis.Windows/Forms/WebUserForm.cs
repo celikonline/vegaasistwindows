@@ -23,6 +23,9 @@ namespace VegaAsis.Windows.Forms
         private CheckBox _chkLicenseCompanyScreen;
         private CheckBox _chkUnlicensedAgentOnly;
         private TextBox _txtResponsibleStaff;
+        private TextBox _txtDescription;
+        private TextBox _txtBannedCompanies;
+        private TextBox _txtInternalBans;
 
         public WebUserDto Dto { get; private set; }
 
@@ -32,7 +35,7 @@ namespace VegaAsis.Windows.Forms
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
             Text = existing == null ? "Yeni Web Kullanıcı" : "Web Kullanıcı Düzenle";
-            Size = new Size(420, 420);
+            Size = new Size(420, 540);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -57,6 +60,9 @@ namespace VegaAsis.Windows.Forms
             AddRow("GSM:", out _txtGsm, ref y);
             AddRow("E-posta:", out _txtEmail, ref y);
             AddRow("Sorumlu Personel:", out _txtResponsibleStaff, ref y);
+            AddRow("Açıklama:", out _txtDescription, ref y);
+            AddRowMultiline("Yasaklı Şirketler (banned_companies):", out _txtBannedCompanies, ref y, 2);
+            AddRowMultiline("İç Yasaklar (internal_bans):", out _txtInternalBans, ref y, 2);
 
             y += 8;
             var grpLisans = new GroupBox { Text = "Lisans Ayarları", Location = new Point(pad, y), Size = new Size(380, 120), Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
@@ -102,6 +108,16 @@ namespace VegaAsis.Windows.Forms
             y += 30;
         }
 
+        private void AddRowMultiline(string label, out TextBox txt, ref int y, int lines = 2)
+        {
+            var lbl = new Label { Text = label, Location = new Point(8, y), Width = 280, Font = new Font("Segoe UI", 9F), AutoEllipsis = true };
+            var h = lines * 20;
+            txt = new TextBox { Location = new Point(8, y + 20), Width = 367, Height = h, Multiline = true, Font = new Font("Segoe UI", 9F), ScrollBars = ScrollBars.Vertical };
+            Controls.Add(lbl);
+            Controls.Add(txt);
+            y += 22 + h;
+        }
+
         private CheckBox AddCheck(Control parent, string text, ref int y)
         {
             var chk = new CheckBox { Text = text, Location = new Point(12, y), AutoSize = true, Font = new Font("Segoe UI", 9F) };
@@ -119,6 +135,9 @@ namespace VegaAsis.Windows.Forms
             _txtGsm.Text = _existing.Gsm;
             _txtEmail.Text = _existing.Email;
             _txtResponsibleStaff.Text = _existing.ResponsibleStaff;
+            _txtDescription.Text = _existing.Description;
+            _txtBannedCompanies.Text = _existing.BannedCompanies;
+            _txtInternalBans.Text = _existing.InternalBans;
             _chkIsLicensed.Checked = _existing.IsLicensed;
             _chkLicenseOfferOnly.Checked = _existing.LicenseOfferOnly;
             _chkLicenseOnlinePolicy.Checked = _existing.LicenseOnlinePolicy;
@@ -152,6 +171,9 @@ namespace VegaAsis.Windows.Forms
                 Gsm = string.IsNullOrWhiteSpace(_txtGsm.Text) ? null : _txtGsm.Text.Trim(),
                 Email = string.IsNullOrWhiteSpace(_txtEmail.Text) ? null : _txtEmail.Text.Trim(),
                 ResponsibleStaff = string.IsNullOrWhiteSpace(_txtResponsibleStaff.Text) ? null : _txtResponsibleStaff.Text.Trim(),
+                Description = string.IsNullOrWhiteSpace(_txtDescription.Text) ? null : _txtDescription.Text.Trim(),
+                BannedCompanies = string.IsNullOrWhiteSpace(_txtBannedCompanies.Text) ? null : _txtBannedCompanies.Text.Trim(),
+                InternalBans = string.IsNullOrWhiteSpace(_txtInternalBans.Text) ? null : _txtInternalBans.Text.Trim(),
                 IsLicensed = _chkIsLicensed.Checked,
                 LicenseOfferOnly = _chkLicenseOfferOnly.Checked,
                 LicenseOnlinePolicy = _chkLicenseOnlinePolicy.Checked,

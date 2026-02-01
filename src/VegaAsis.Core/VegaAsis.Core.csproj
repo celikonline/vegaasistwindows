@@ -41,6 +41,7 @@
     <Compile Include="Contracts\IWebUserService.cs" />
     <Compile Include="Contracts\IUserGroupService.cs" />
     <Compile Include="Contracts\IUserManagementService.cs" />
+    <Compile Include="Contracts\IAnnouncementService.cs" />
     <Compile Include="DTOs\AppointmentDto.cs" />
     <Compile Include="DTOs\AppSettingsDto.cs" />
     <Compile Include="DTOs\CompanySettingsDto.cs" />
@@ -52,6 +53,7 @@
     <Compile Include="DTOs\ReceivedCompanyShareDto.cs" />
     <Compile Include="DTOs\SharedCompanyDto.cs" />
     <Compile Include="DTOs\WebUserDto.cs" />
+    <Compile Include="DTOs\AnnouncementDto.cs" />
     <Compile Include="DTOs\UserDataDto.cs" />
     <Compile Include="DTOs\UserGroupDto.cs" />
     <Compile Include="DTOs\UserSettingsDto.cs" />

@@ -5,6 +5,23 @@ Hedef: `vegaasistwindows` (.NET 4.7 WinForms + EF6 + PostgreSQL)
 
 ---
 
+## Tamamlanan İşler (Son Oturum)
+
+| Tarih | Öğe | Açıklama |
+|-------|-----|----------|
+| Güncel | **Duyuru servisi** | `IAnnouncementService` + `AnnouncementService` + `Announcement` entity; `DuyurularForm` servisten veri yüklüyor, "Duyuru Gönder" ile `CreateAsync` çağrılıyor. |
+| Güncel | **DASK Yapı Tarzı** | `YapiTarziOptions.cs` eklendi (Betonarme, Yığma, Çelik, Ahşap, Karma, Prefabrik, Briket, Kerpiç, Taş, Diğer); `DaskDetaylariForm` bu listeyi kullanıyor. |
+| Güncel | **Kısa Vadeli Poliçe** | `SorguSession.KisaVadeliPolice` eklendi; `IndexViewControl` toolbar’daki "Kısa Vadeli Poliçe Çalış" checkbox’ı `SyncToSession` / `LoadFromSession` ile senkron. |
+| Güncel | **Branş formları** | Combo TRAFİK → TrafikTeklifiForm; SBM kolonu çift tık → SbmSorgusuForm. BranchFormRequested / BranchCellClickRequested bağlı. |
+| Güncel | **Trafik Pol. Bilgisi** | Başlangıç T. / Bitiş T. alanları; SorguSession senkron. |
+| Güncel | **Diğer Fiyatlar (subPrices)** | "Diğer Fiyatları Göster" ile grid alt fiyat satırları; RowTag, RefreshCompanyGrid, çift tıklama güncellendi. |
+| Güncel | **Agent Paylaşımı** | PaylasilanSirketlerControl: Şirket dropdown, Paylaş/Kaldır, Benim Paylaştıklarım + Benimle Paylaşılanlar (SplitContainer), GetReceivedSharesAsync, CreateAsync/DeleteAsync bağlı. |
+| Güncel | **Web Ekranları** | IWebUserService + WebUserService, WebEkranlariControl CRUD + unlicensed_agent_only; WebUserForm Lisanssız Acente, banned_companies, internal_bans, Description alanları eklendi. |
+| Güncel | **Veri kaynakları** | TurkeyLocations (İl/İlçe), Professions (Meslek), KullanimTarziOptions (Kullanım Tarzı), VehicleBrandsAndTypes (Marka/Tip); IndexViewControl AddFormRowIlIlce, Meslek, Kullanım Tarzı, Marka/Tip, Şasi No kullanıyor. |
+| Güncel | **Header layout** | rightFlow WrapContents = true (Giriş Yap, CANLI DESTEK, CANLI ÜRETİM dar pencerede wrap); topHeader Height 88, MinimumSize (0,52). |
+
+---
+
 ## 1. Genel Eşleme Tablosu
 
 | Kaynak (React) | Hedef (WinForms) | Durum |
@@ -25,8 +42,8 @@ Hedef: `vegaasistwindows` (.NET 4.7 WinForms + EF6 + PostgreSQL)
 | **Admin Tabs / UserControls** |
 | SirketAyarlariTab | SirketAyarlariControl | ✅ Mevcut |
 | KullaniciAyarlariTab | KullaniciAyarlariUserControl | ✅ Mevcut |
-| PaylasilanSirketlerTab | PaylasilanSirketlerControl | ⚠️ Kısmi |
-| WebEkranlariTab | WebEkranlariControl | ⚠️ Kısmi |
+| PaylasilanSirketlerTab | PaylasilanSirketlerControl | ✅ Mevcut (paylaş/kaldır/received shares) |
+| WebEkranlariTab | WebEkranlariControl | ✅ Mevcut (CRUD + unlicensed_agent_only) |
 | DigerAyarlarTab | DigerAyarlarControl | ✅ Mevcut |
 | TekliflerTab (admin) | TekliflerAyarControl | ✅ Mevcut |
 | GruplarTab | GruplarControl | ✅ Mevcut |
@@ -34,7 +51,7 @@ Hedef: `vegaasistwindows` (.NET 4.7 WinForms + EF6 + PostgreSQL)
 | KotaAyarlariTab | KotaAyarlariControl | ✅ Mevcut |
 | **Hooks / Services** |
 | useSharedCompanies | SharedCompanyService | ✅ Mevcut |
-| useWebUsers | ❌ WebUserService | ❌ Eksik |
+| useWebUsers | WebUserService | ✅ Mevcut (WebEkranlariControl bağlı) |
 | useCompanySettings | CompanySettingsService | ✅ Mevcut |
 | useUserManagement | UserManagementService | ✅ Mevcut |
 | useQuotaSettings | QuotaSettingsService | ✅ Mevcut |
@@ -43,6 +60,7 @@ Hedef: `vegaasistwindows` (.NET 4.7 WinForms + EF6 + PostgreSQL)
 | useOffers | OfferService | ✅ Mevcut |
 | usePolicies | PolicyService | ✅ Mevcut |
 | useAppointments | AppointmentService | ✅ Mevcut |
+| useAnnouncements / Duyurular | AnnouncementService | ✅ Mevcut (DuyurularForm entegre) |
 
 ---
 
@@ -62,8 +80,8 @@ Ekran görüntülerine göre tespit edilen düzen problemleri:
 
 | Sorun | Açıklama | Kod Konumu | Önerilen Çözüm |
 |-------|----------|------------|----------------|
-| **"Belge Seri:" etiketi kesiliyor** | Etiket sol kenardan taşıyor veya GroupBox içinde clipping oluyor | `AddFormRow` – Label `Location(8, y)`, input `Left=120`; GroupBox `Size(320,220)` | Etiket genişliğini `Label.AutoSize = false` + `Width = 110` yap; veya `MinimumSize` ile güvence al |
-| **Floating action butonları** | Yeni, SBM Sorgu, Kuyruk butonları sağda 48px panelde; formla görsel kopukluk | `_rightActionPanel` Width=48, Dock=Right | Referans app’e benzer şekilde ~120px genişlikte, tam etiketli butonlar kullan (React QueryPanel sağ kolon ~120px) |
+| **"Belge Seri:" etiketi kesiliyor** | Etiket sol kenardan taşıyor veya GroupBox içinde clipping oluyor | `AddFormRow` – Label `Location(8, y)`, input `Left=120`; GroupBox `Size(320,220)` | ✅ Tüm form satır etiketleri `Size(110, 20)` ile sabitlendi (Belge Seri, Marka/Tip, İl/İlçe vb.). |
+| **Floating action butonları** | Yeni, SBM Sorgu, Kuyruk butonları sağda panelde | `_rightActionPanel` Width=120, Dock=Right | ✅ Sağ panel 120px; tam etiketli butonlar. Referans app’e benzer şekilde ~120px genişlikte, tam etiketli butonlar kullan (React QueryPanel sağ kolon ~120px) |
 | **Sabit boyutlar** | `grpMusteri` 320x220, `_aracBilgileriTabs` 320x200 – dar panelde taşma | `BuildRightPanel` | `Anchor = Right` kullan; `scrollPanel` içindeki kontroller için `Width = rightPanel.ClientSize.Width - 24` gibi dinamik hesapla |
 | **TopBar taşması** | lblTeklifId, chkDigerFiyat, chkAltFiyat, btnPdf sabit Location ile 500px+ gerektiriyor | `topBar` controls | FlowLayoutPanel ile wrap veya küçük fontlarla sığdır |
 | **"2 Tarayıcıları Kapat" hizası** | Referans app’te "2 Tarayıcıları Kapat" metninde ufak hiza kayması | - | Button.TextAlign, Padding ayarları ile düzelt |
@@ -73,8 +91,8 @@ Ekran görüntülerine göre tespit edilen düzen problemleri:
 | Sorun | Açıklama | Kod Konumu | Önerilen Çözüm |
 |-------|----------|------------|----------------|
 | **Boş beyaz alan** | Grid’in altında geniş boşluk; az satırda panel dolmuyor | `_companyGrid` Dock=Fill, Panel1 | Normal; grid az satırda üstte kalır. Alternatif: grid için `RowFill` veya alt bilgi alanı ekle |
-| **Uyarı kolonu truncate** | "Ek Teminatlı Trafik Teklifidir!" gibi metinler "..." ile kesiliyor | `_companyGrid` AutoSizeColumnsMode.Fill | Uyarı kolonuna `MinimumWidth` veya `AutoSizeMode = DisplayedCells` ver |
-| **Kolon genişlikleri** | Tüm kolonlar Fill ile eşit; bazı kolonlar (Şirket, Uyarı) daha geniş olmalı | DataGridView columns | `FillWeight` veya sabit `Width` ile öncelik ver |
+| **Uyarı kolonu truncate** | "Ek Teminatlı Trafik Teklifidir!" gibi metinler "..." ile kesiliyor | `_companyGrid` | ✅ Uyarı MinimumWidth=220; Şirket/Uyarı FillWeight 120/180. |
+| **Kolon genişlikleri** | Tüm kolonlar Fill ile eşit; bazı kolonlar (Şirket, Uyarı) daha geniş olmalı | DataGridView columns | ✅ Şirket FillWeight 120, Uyarı FillWeight 180. |
 
 ### Genel Layout Önerileri
 
@@ -93,12 +111,12 @@ Grid’de Trafik, Kasko, TSS, DASK, Konut, IMM kolonları var ancak sağ panel s
 
 | Branş | React | WinForms Form | IndexViewControl’e Bağlı | Durum |
 |-------|-------|---------------|--------------------------|-------|
-| **TRAFİK** | QueryPanel + TrafikTeklifiDialog | TrafikTeklifiForm | ❌ Sağ panel sadece TRAFİK alanları | Form var, ana ekrandan açılmıyor |
-| **KASKO** | KaskoTeminatlariDialog + farklı araç alanları | KaskoTeminatlariForm | ❌ Kasko Pol. Bilgisi tab boş | Form var, tab/dialog boş |
-| **TSS** | TssDetaylariDialog | TssDetaylariForm | ❌ - | Form var, tetiklenmiyor |
-| **DASK / KONUT** | DaskDetaylariDialog | DaskDetaylariForm | ❌ - | Form var, tetiklenmiyor |
-| **İMM** | ImmTeminatlariDialog | ImmTeminatlariForm | ❌ - | Form var, tetiklenmiyor |
-| **SBM** | SbmSorgusuDialog | SbmSorgusuForm | ✅ SBM Sorgula butonu | Bağlı |
+| **TRAFİK** | QueryPanel + TrafikTeklifiDialog | TrafikTeklifiForm | ✅ Combo TRAFİK seçilince açılıyor | BranchFormRequested ile bağlı |
+| **KASKO** | KaskoTeminatlariDialog + farklı araç alanları | KaskoTeminatlariForm | ✅ Combo KASKO seçilince açılıyor | BranchFormRequested; Kasko Pol. tab içeriği kısmen dolu |
+| **TSS** | TssDetaylariDialog | TssDetaylariForm | ✅ Combo TSS seçilince açılıyor | BranchFormRequested |
+| **DASK / KONUT** | DaskDetaylariDialog | DaskDetaylariForm | ✅ Combo DASK/KONUT seçilince açılıyor | BranchFormRequested |
+| **İMM** | ImmTeminatlariDialog | ImmTeminatlariForm | ✅ Combo İMM seçilince açılıyor | BranchFormRequested |
+| **SBM** | SbmSorgusuDialog | SbmSorgusuForm | ✅ SBM butonu + grid SBM kolonu çift tıklama | Bağlı |
 | **Kuyruk** | KuyrukSorgusuDialog | KuyrukSorgusuForm | ✅ Kuyruk Sorgusu butonu | Bağlı |
 | **Webcam QR** | WebcamQRDialog | WebcamQRForm | ✅ Webcam QR Oku butonu | Bağlı |
 
@@ -109,28 +127,29 @@ Grid’de Trafik, Kasko, TSS, DASK, Konut, IMM kolonları var ancak sağ panel s
 | 1 | **PolicyTypeSelect** | React’ta TRAFİK/KASKO/TSS/DASK/KONUT/İMM seçici var; seçime göre ilgili dialog açılıyor. WinForms’ta yok. |
 | 2 | **Seçili şirket özeti** | React QueryPanel’de seçilen şirket (ikon, ad, durum, fiyat) gösteriliyor. IndexViewControl’de yok. |
 | 3 | **Trafik Pol. Bilgisi tab içeriği** | Tab mevcut ama boş; React’ta Sigorta Şirketi, Acente Kodu, Poliçe No, Kademe vb. var. |
-| 4 | **Kasko Pol. Bilgisi tab içeriği** | Tab mevcut ama boş; React’ta benzer alanlar var. |
-| 5 | **İl / İlçe verisi** | React `turkeyLocations` kullanıyor; WinForms combo’lar boş "Seçiniz". |
-| 6 | **Meslek listesi** | React `professionsList` kullanıyor; WinForms boş. |
-| 7 | **Kullanım Tarzı listesi** | React’ta OTOMOBİL, TAKSİ, MİNİBÜS vb.; WinForms’ta "KULLANIM TARZI SEÇİNİZ" placeholder. |
-| 8 | **Şasi No alanı** | React’ta var; WinForms Araç Bilgileri tab’inde yok. |
-| 9 | **Kısa Vadeli Poliçe Çalış** | Referans app’te var; WinForms’ta yok. |
-| 10 | **Marka / Tip verisi** | React’ta örnek değerler var; WinForms’ta sabit "59 - FORD/OTOSAN" vb. – API/veri kaynağı gerekebilir. |
-| 11 | **Branş değişiminde grid filtreleme** | React’ta `activeBranch` ile `unavailableBranches` (üstü çizili) kullanılıyor; WinForms grid’de yok. |
+| 4 | **Kasko Pol. Bilgisi tab içeriği** | ✅ Sigorta Şirketi, Acente Kodu, Poliçe No, Kademe, Hasarsızlık %, Kalan Gün, Yenileme No. React’ta benzer alanlar var. |
+| 5 | **İl / İlçe verisi** | ✅ TurkeyLocations.GetCityNames(), GetDistrictsByCity(); AddFormRowIlIlce ile İl/İlçe combo'lar dolu. React `turkeyLocations` kullanıyor; WinForms combo’lar boş "Seçiniz". |
+| 6 | **Meslek listesi** | ✅ Professions.List; IndexViewControl Müşteri Bilgileri Meslek combo. |
+| 7 | **Kullanım Tarzı listesi** | ✅ KullanimTarziOptions.List (OTOMOBİL, TAKSİ, MİNİBÜS vb.); Araç Bilgileri tab. React’ta OTOMOBİL, TAKSİ, MİNİBÜS vb.; WinForms’ta "KULLANIM TARZI SEÇİNİZ" placeholder. |
+| 8 | **Şasi No alanı** | ✅ Araç Bilgileri tab'inde Şasi No satırı var (AddFormRow). React’ta var; WinForms Araç Bilgileri tab’inde yok. |
+| 9 | **Kısa Vadeli Poliçe Çalış** | ✅ SorguSession + IndexViewControl checkbox bağlandı. app’te’ta yok. |
+| 10 | **Marka / Tip verisi** | ✅ VehicleBrandsAndTypes.GetBrandDisplays(), GetTypesByBrandDisplay(); AddFormRowMarkaTip. React’ta örnek değerler var; WinForms’ta sabit "59 - FORD/OTOSAN" vb. – API/veri kaynağı gerekebilir. |
+| 11 | **Branş değişiminde grid filtreleme** | ✅ CompanyRow.UnavailableBranches; Şirket kolonunda (Yok) + üstü çizili; Trafik/Kasko/Sbm/TSS/Konut/Dask/İMM kolonlarında ilgili branş yoksa hücre üstü çizili + gri (GetBranchForColumn, CellFormatting). React’ta `activeBranch` ile `unavailableBranches` (üstü çizili) kullanılıyor; WinForms grid’de yok. |
 | 12 | **subPrices / Diğer Fiyatlar expand** | React CompanyTable’da satır genişletme (expand) ve alt fiyatlar var; WinForms grid’de yok. |
-| 13 | **Nav butonları → form açma** | IndexViewControl nav butonları (ŞİRKETLER, TEKLİFLER vb.) tıklanınca ilgili form açılmıyor. |
-| 14 | **PDF Aktar / Yükle** | Butonlar var; işlev bağlı değil. |
-| 15 | **Sorguyu Başlat** | Buton var; gerçek sorgu başlatma mantığı yok. |
-| 16 | **Duraklat / Devam Et** | Buton var; işlev yok. |
-| 17 | **Yeni Sorgu Kaydet** | Buton var; işlev yok. |
+| 13 | **Nav butonları → form açma** | ✅ MainForm'da Teklifler, Policelerim, SirketlerRobot, Raporlar, Destek Talepleri, Ajanda, Duyurular event'leri bağlı; tıklanınca ilgili form açılıyor. |
+| 14 | **PDF Aktar / Yükle** | ✅ PDF Aktar → PDFExportForm açılıyor. PDF Yükle → OpenPdfUpload (dosya seçimi + bilgi); sunucu yükleme/import ileride eklenebilir. |
+| 15 | **Sorguyu Başlat** | ✅ Session'dan OfferDto oluşturulup OfferService.CreateAsync ile teklif kaydı; başarı/hata mesajı. |
+| 16 | **Duraklat / Devam Et** | ✅ IndexViewControl'de session Durum (Running/Paused) ve buton metni güncelleniyor; DuraklatRequested tetikleniyor (arka plan iş yok). |
+| 17 | **Yeni Sorgu Kaydet** | ✅ Session.Reset + LoadFromSession + mesaj; YeniSorguKaydetRequested tetikleniyor. |
 
 ### Veri Kaynakları (Taşınması Gereken)
 
 | Veri | React Dosya | WinForms Karşılığı |
 |------|-------------|---------------------|
-| İl/İlçe | `turkeyLocations.ts` | C# sınıf veya JSON/resource |
-| Meslekler | `professions.ts` | C# sınıf veya JSON/resource |
-| Kullanım tarzları | QueryPanel sabit liste | C# enum veya liste |
+| İl/İlçe | `turkeyLocations.ts` | ✅ TurkeyLocations.cs (GetCityNames, GetDistrictsByCity) |
+| Meslekler | `professions.ts` | ✅ Professions.cs (List) |
+| Kullanım tarzları | QueryPanel sabit liste | ✅ KullanimTarziOptions.cs (List) |
+| Marka/Tip | - | ✅ VehicleBrandsAndTypes.cs (GetBrandDisplays, GetTypesByBrandDisplay) |
 
 ---
 
@@ -140,14 +159,14 @@ Grid’de Trafik, Kasko, TSS, DASK, Konut, IMM kolonları var ancak sağ panel s
 
 | Özellik | React | WinForms | Durum |
 |---------|-------|----------|-------|
-| Paylaşım formu (Şirket + Acente Kodu) | Var | ❌ Yok | **Eksik** |
-| `selectedCompanies` → Şirket dropdown | Var | ❌ Yok | **Eksik** |
-| Yeni paylaşım ekleme (shareCompany) | Var | `_btnYeniPaylasim` click handler yok | **Eksik** |
-| Benim Paylaştıklarım listesi | Var | Var (tek DGV) | ⚠️ Gösterim farklı |
-| Benimle Paylaşılanlar (receivedShares) | Var | ❌ Yok | **Eksik** |
-| Paylaşım silme (deleteShare) | Var | `_btnKaldir` handler yok | **Eksik** |
-| Owner user filtresi | user.id | AuthService.CurrentUser | ⚠️ Kontrol et |
-| SharedAt tarih formatı | tr-TR | - | **Eksik** |
+| Paylaşım formu (Şirket + Acente Kodu) | Var | Var (_topPanel: _cmbSirket, _txtAcenteKodu, _btnPaylas) | ✅ |
+| `selectedCompanies` → Şirket dropdown | Var | Var (GetSelectedCompaniesAsync → _cmbSirket) | ✅ |
+| Yeni paylaşım ekleme (shareCompany) | Var | BtnPaylas_Click → CreateAsync | ✅ |
+| Benim Paylaştıklarım listesi | Var | Var (_dgvPaylasilanlar, SplitContainer) | ✅ |
+| Benimle Paylaşılanlar (receivedShares) | Var | Var (_dgvAlinanlar, GetReceivedSharesAsync) | ✅ |
+| Paylaşım silme (deleteShare) | Var | BtnKaldir_Click → DeleteAsync | ✅ |
+| Owner user filtresi | user.id | _authService.GetCurrentUserId | ✅ |
+| SharedAt tarih formatı | tr-TR | dd.MM.yyyy (CultureInfo tr-TR) | ✅ |
 
 **Gerekli İşlemler:**
 1. `PaylasilanSirketlerControl` için `ICompanySettingsService` / `ISharedCompanyService` + `IAuthService` enjekte et (şirket listesi için)
@@ -162,11 +181,11 @@ Grid’de Trafik, Kasko, TSS, DASK, Konut, IMM kolonları var ancak sağ panel s
 
 | Özellik | React | WinForms | Durum |
 |---------|-------|----------|-------|
-| Web kullanıcı CRUD | useWebUsers | Hardcoded mock | **Eksik** |
-| unlicensed_agent_only checkbox | Var | ❌ Yok | **Eksik** |
-| WebUser entity/service | Supabase web_users | ❌ Entity var, Service yok | **Eksik** |
-| Lisans alanları (is_licensed, license_offer_only, vb.) | Var | Sadece mock | **Eksik** |
-| banned_companies, internal_bans | Var | ❌ Yok | **Eksik** |
+| Web kullanıcı CRUD | useWebUsers | WebUserService Create/Update/Delete, WebEkranlariControl Yeni/Düzenle/Sil | ✅ |
+| unlicensed_agent_only checkbox | Var | WebUserForm _chkUnlicensedAgentOnly, grid ColUnlicensed | ✅ |
+| WebUser entity/service | Supabase web_users | WebUser entity, WebUsers DbSet, WebUserService | ✅ |
+| Lisans alanları (is_licensed, license_offer_only, vb.) | Var | WebUserForm + WebUserDto | ✅ |
+| banned_companies, internal_bans | Var | WebUserForm _txtBannedCompanies, _txtInternalBans | ✅ |
 
 **Gerekli İşlemler:**
 1. `WebUserService` + `IWebUserService` oluştur (useWebUsers → C#)
@@ -254,12 +273,12 @@ public PaylasilanSirketlerControl(
 
 | # | Eksik | Modül | Öncelik |
 |---|-------|-------|---------|
-| 1 | PaylasilanSirketlerControl: Yeni paylaşım formu + shareCompany | Agent | Yüksek |
-| 2 | PaylasilanSirketlerControl: Benimle Paylaşılanlar paneli | Agent | Yüksek |
-| 3 | PaylasilanSirketlerControl: deleteShare handler | Agent | Yüksek |
-| 4 | PaylasilanSirketlerControl: selectedCompanies (şirket dropdown) | Agent | Yüksek |
-| 5 | WebUserService + IWebUserService | Web Ekranları | Yüksek |
-| 6 | WebEkranlariControl: unlicensed_agent_only + CRUD | Web Ekranları | Yüksek |
+| 1 | PaylasilanSirketlerControl: Yeni paylaşım formu + shareCompany | Agent | ✅ Tamamlandı |
+| 2 | PaylasilanSirketlerControl: Benimle Paylaşılanlar paneli | Agent | ✅ Tamamlandı |
+| 3 | PaylasilanSirketlerControl: deleteShare handler | Agent | ✅ Tamamlandı |
+| 4 | PaylasilanSirketlerControl: selectedCompanies (şirket dropdown) | Agent | ✅ Tamamlandı |
+| 5 | WebUserService + IWebUserService | Web Ekranları | ✅ Tamamlandı |
+| 6 | WebEkranlariControl: unlicensed_agent_only + CRUD | Web Ekranları | ✅ Tamamlandı |
 | 7 | SharedCompanyService.UpdateShare (opsiyonel) | Agent | Düşük |
 | 8 | DbContext.WebUsers (web_users tablosu) | Veri | ✅ Mevcut |
 
@@ -267,26 +286,21 @@ public PaylasilanSirketlerControl(
 
 ## 7. Sonraki Adım Önerisi
 
-### Öncelik 1: Ana Ekran Kaymaları (Hızlı Düzeltmeler)
-1. **Belge Seri label:** `AddFormRow` içinde label için `MinimumSize` veya sabit genişlik ver.
-2. **Right action panel:** 48px yerine ~120px yap; buton etiketlerini tam göster (React QueryPanel benzeri).
-3. **Header responsive:** Nav + sağ butonlar için `TableLayoutPanel` veya `FlowLayoutPanel` kullan.
-4. **Form sabit boyutları:** `grpMusteri`, `_aracBilgileriTabs` için `Anchor.Right` ve dinamik genişlik.
+### Tamamlanan (Layout / Branş / Veri / Agent / Web / Sorgu)
+- **Layout:** Belge Seri etiketleri 110px, sağ panel 120px, Uyarı/Şirket FillWeight, header rightFlow WrapContents + Height 88.
+- **Branş:** PolicyTypeSelect combo, BranchFormRequested, Trafik/Kasko Pol. tab, seçili şirket paneli.
+- **Veri:** TurkeyLocations, Professions, KullanimTarziOptions, VehicleBrandsAndTypes.
+- **Agent:** PaylasilanSirketlerControl paylaş/kaldır/received shares. **Web:** WebUserService, WebEkranlariControl CRUD.
+- **Sorgu/PDF:** Sorguyu Başlat, Duraklat, Yeni Sorgu Kaydet, PDF Aktar, PDF Yükle bağlandı.
 
-### Öncelik 2: Branş Bazlı Form Entegrasyonu
-1. **PolicyTypeSelect:** ComboBox ile TRAFİK/KASKO/TSS/DASK/KONUT/İMM seçimi ekle.
-2. **Seçime göre form:** KASKO seçilince KaskoTeminatlariForm, TSS için TssDetaylariForm vb.
-3. **Trafik Pol. / Kasko Pol. tab içerikleri:** React'taki alanları C#'a taşı.
-4. **Seçili şirket paneli:** Grid'den seçim al; sağ panel üstünde şirket özeti göster.
+### Kalan / Opsiyonel
+1. **Layout ince ayar:** Nav sıkışıklığı, çift menü birleştirme, TopBar taşması (dar pencerede).
+2. **SharedCompanyService.UpdateShare** (opsiyonel, düşük öncelik).
+3. **PDF Yükle:** Sunucuya yükleme veya PDF import mantığı (şu an dosya seçimi).
+4. **Duraklat:** Arka plan sorgu/robot eklendiğinde gerçek duraklatma entegrasyonu.
 
-### Öncelik 3: Veri Kaynakları
-1. turkeyLocations, professions, kullanım tarzları → C# sınıf veya JSON resource.
-
-### Öncelik 4: Agent Paylaşımı
-1. **Agent Paylaşımı:** `PaylasilanSirketlerControl` için `ICompanySettingsService` ve `IAuthService` enjekte edip, yeni paylaşım formu + received shares paneli ekle.
-
-### Öncelik 5: Web Ekranları
-2. **Web Ekranları:** `web_users` tablosunu schema’da doğrula, `WebUserService` oluştur, `WebEkranlariControl`’ü gerçek servise bağla.
+_(Öncelik 2-5 tamamlandı.)_
+2. ~~**Web Ekranları:** `web_users` tablosunu~~ schema’da doğrula, `WebUserService` oluştur, `WebEkranlariControl`’ü gerçek servise bağla.
 
 ---
 
@@ -294,7 +308,7 @@ public PaylasilanSirketlerControl(
 
 | Kategori | Tespit Edilen | Aksiyon |
 |----------|---------------|---------|
-| **Kaymalar** | Belge Seri kesilmesi, Giriş Yap butonu truncate, floating action butonları, sabit boyutlar | Layout düzeltmeleri (Bölüm 1.1) |
-| **Eksik formlar** | PolicyTypeSelect, Trafik/Kasko Pol. tab içerikleri, branş dialogları tetiklenmiyor | Branş entegrasyonu (Bölüm 1.2) |
-| **Eksik veri** | İl/İlçe, Meslek, Kullanım Tarzı | Veri kaynakları taşınmalı |
-| **Bağlı olmayan butonlar** | Sorguyu Başlat, Duraklat, Yeni Sorgu Kaydet, PDF Aktar/Yükle | İş mantığı eklenmeli |
+| **Kaymalar** | Belge Seri, sağ panel 120px, Uyarı FillWeight, header WrapContents + Height 88 yapıldı; nav/TopBar ince ayar opsiyonel | Bölüm 1.1 (çoğu tamamlandı) |
+| **Eksik formlar** | PolicyTypeSelect, Trafik/Kasko Pol. tab, branş dialogları | ✅ Tamamlandı (Bölüm 1.2) |
+| **Eksik veri** | İl/İlçe, Meslek, Kullanım Tarzı, Marka/Tip | ✅ TurkeyLocations, Professions, KullanimTarziOptions, VehicleBrandsAndTypes |
+| **Sorgu / PDF butonları** | Sorguyu Başlat (teklif oluşturma), Duraklat (session), Yeni Sorgu Kaydet (reset), PDF Aktar (form), PDF Yükle (dosya seçimi) | ✅ Bağlandı (Eksik Parçalar #14-17) |

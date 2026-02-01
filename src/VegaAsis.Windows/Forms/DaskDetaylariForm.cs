@@ -114,7 +114,7 @@ namespace VegaAsis.Windows.Forms
                 Width = controlWidth,
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
-            _cmbYapiTarzi.Items.AddRange(new object[] { "Betonarme", "Yığma", "Çelik", "Diğer" });
+            _cmbYapiTarzi.Items.AddRange(YapiTarziOptions.List);
             groupBox.Controls.Add(_cmbYapiTarzi);
             y += spacing;
 

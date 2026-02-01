@@ -258,6 +258,7 @@
     <Compile Include="Data\TurkeyLocations.cs" />
     <Compile Include="Data\VehicleBrandsAndTypes.cs" />
     <Compile Include="Data\SigortaSirketleri.cs" />
+    <Compile Include="Data\YapiTarziOptions.cs" />
     <Compile Include="Models\SorguSession.cs" />
     <Compile Include="Models\BranchCellClickEventArgs.cs" />
   </ItemGroup>

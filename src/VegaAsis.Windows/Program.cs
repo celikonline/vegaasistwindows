@@ -26,6 +26,7 @@ namespace VegaAsis.Windows
             builder.RegisterType<SharedCompanyService>().As<ISharedCompanyService>().InstancePerLifetimeScope();
             builder.RegisterType<WebUserService>().As<IWebUserService>().InstancePerLifetimeScope();
             builder.RegisterType<AppSettingsService>().As<IAppSettingsService>().InstancePerLifetimeScope();
+            builder.RegisterType<AnnouncementService>().As<IAnnouncementService>().InstancePerLifetimeScope();
             builder.RegisterType<UserGroupService>().As<IUserGroupService>().InstancePerLifetimeScope();
             builder.RegisterType<QuotaSettingsService>().As<IQuotaSettingsService>().InstancePerLifetimeScope();
             var container = builder.Build();
