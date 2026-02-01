@@ -36,6 +36,12 @@ namespace VegaAsis.Windows.Models
         public DateTime? TrafikBitisTarihi { get; set; }
         public bool KisaVadeliPolice { get; set; }
 
+        public string KaskoSigortaSirketi { get; set; }
+        public string KaskoAcenteKodu { get; set; }
+        public string KaskoPoliceNo { get; set; }
+        public DateTime? KaskoBaslangicTarihi { get; set; }
+        public DateTime? KaskoBitisTarihi { get; set; }
+
         public SorguSession()
         {
             Durum = SorguDurum.Idle;
@@ -67,6 +73,11 @@ namespace VegaAsis.Windows.Models
             TrafikBaslangicTarihi = null;
             TrafikBitisTarihi = null;
             KisaVadeliPolice = false;
+            KaskoSigortaSirketi = null;
+            KaskoAcenteKodu = null;
+            KaskoPoliceNo = null;
+            KaskoBaslangicTarihi = null;
+            KaskoBitisTarihi = null;
         }
     }
 }

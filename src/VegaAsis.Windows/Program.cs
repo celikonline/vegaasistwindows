@@ -15,6 +15,24 @@ namespace VegaAsis.Windows
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            Application.ThreadException += (s, e) =>
+            {
+                try
+                {
+                    MessageBox.Show(e.Exception?.Message ?? "Beklenmeyen hata.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch { }
+            };
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                try
+                {
+                    var ex = e.ExceptionObject as Exception;
+                    MessageBox.Show(ex?.Message ?? "Beklenmeyen hata.", "Kritik Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch { }
+            };
+
             var builder = new ContainerBuilder();
             builder.RegisterType<VegaAsisDbContext>().InstancePerLifetimeScope();
             builder.RegisterType<AuthService>().As<IAuthService>().SingleInstance();
@@ -27,6 +45,15 @@ namespace VegaAsis.Windows
             builder.RegisterType<WebUserService>().As<IWebUserService>().InstancePerLifetimeScope();
             builder.RegisterType<AppSettingsService>().As<IAppSettingsService>().InstancePerLifetimeScope();
             builder.RegisterType<AnnouncementService>().As<IAnnouncementService>().InstancePerLifetimeScope();
+            builder.RegisterType<DaskService>().As<IDaskService>().InstancePerLifetimeScope();
+            builder.RegisterType<KaskoService>().As<IKaskoService>().InstancePerLifetimeScope();
+            builder.RegisterType<ImmService>().As<IImmService>().InstancePerLifetimeScope();
+            builder.RegisterType<KonutService>().As<IKonutService>().InstancePerLifetimeScope();
+            builder.RegisterType<TssService>().As<ITssService>().InstancePerLifetimeScope();
+            builder.RegisterType<TramerService>().As<ITramerService>().InstancePerLifetimeScope();
+            builder.RegisterType<UavtService>().As<IUavtService>().InstancePerLifetimeScope();
+            builder.RegisterType<SablonService>().As<ISablonService>().InstancePerLifetimeScope();
+            builder.RegisterType<WsSorguService>().As<IWsSorguService>().InstancePerLifetimeScope();
             builder.RegisterType<UserGroupService>().As<IUserGroupService>().InstancePerLifetimeScope();
             builder.RegisterType<QuotaSettingsService>().As<IQuotaSettingsService>().InstancePerLifetimeScope();
             var container = builder.Build();

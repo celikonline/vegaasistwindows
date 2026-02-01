@@ -1,15 +1,19 @@
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
     public class ImmTeminatlariForm : Form
     {
+        private GroupBox _grpTeminatListesi;
         private GroupBox _grpTeminatLimitleri;
         private GroupBox _grpEkBilgiler;
         private GroupBox _grpPrimBilgisi;
         private Panel _bottomPanel;
+        private DataGridView _dgvTeminatlar;
 
         private Label _lblKisiBasiLimit;
         private ComboBox _cmbKisiBasiLimit;
@@ -32,22 +36,51 @@ namespace VegaAsis.Windows.Forms
         public ImmTeminatlariForm()
         {
             InitializeComponent();
+            Shown += ImmTeminatlariForm_Shown;
+        }
+
+        private async void ImmTeminatlariForm_Shown(object sender, EventArgs e)
+        {
+            await LoadTeminatlarAsync().ConfigureAwait(true);
         }
 
         private void InitializeComponent()
         {
             Text = "İMM Teminatları";
-            Size = new Size(500, 400);
+            Size = new Size(500, 520);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
 
+            // Teminat Listesi (Servis) GroupBox
+            _grpTeminatListesi = new GroupBox
+            {
+                Text = "Teminat Listesi",
+                Location = new Point(10, 10),
+                Size = new Size(480, 100),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            _dgvTeminatlar = new DataGridView
+            {
+                Location = new Point(10, 25),
+                Size = new Size(460, 65),
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                RowHeadersVisible = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            _dgvTeminatlar.Columns.Add("Kod", "Kod");
+            _dgvTeminatlar.Columns.Add("Ad", "Ad");
+            _dgvTeminatlar.Columns.Add("Prim", "Prim");
+            _grpTeminatListesi.Controls.Add(_dgvTeminatlar);
+            Controls.Add(_grpTeminatListesi);
+
             // Teminat Limitleri GroupBox
             _grpTeminatLimitleri = new GroupBox
             {
                 Text = "Teminat Limitleri",
-                Location = new Point(10, 10),
+                Location = new Point(10, 118),
                 Size = new Size(480, 120),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -58,7 +91,7 @@ namespace VegaAsis.Windows.Forms
             _grpEkBilgiler = new GroupBox
             {
                 Text = "Ek Bilgiler",
-                Location = new Point(10, 140),
+                Location = new Point(10, 248),
                 Size = new Size(480, 120),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -69,7 +102,7 @@ namespace VegaAsis.Windows.Forms
             _grpPrimBilgisi = new GroupBox
             {
                 Text = "Prim Bilgisi",
-                Location = new Point(10, 270),
+                Location = new Point(10, 378),
                 Size = new Size(480, 80),
                 Height = 80,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -250,6 +283,28 @@ namespace VegaAsis.Windows.Forms
                 TextAlign = ContentAlignment.MiddleLeft
             };
             _grpPrimBilgisi.Controls.Add(_lblYillikPrimDeger);
+        }
+
+        private async Task LoadTeminatlarAsync()
+        {
+            if (_dgvTeminatlar == null) return;
+            _dgvTeminatlar.Rows.Clear();
+            if (!ServiceLocator.IsInitialized) return;
+            try
+            {
+                var service = ServiceLocator.Resolve<VegaAsis.Core.Contracts.IImmService>();
+                if (service == null) return;
+                var list = await service.GetTeminatlarAsync().ConfigureAwait(true);
+                if (list == null) return;
+                foreach (var t in list)
+                {
+                    _dgvTeminatlar.Rows.Add(t.Kod ?? "", t.Ad ?? "", t.Prim.HasValue ? t.Prim.Value.ToString("N2") : "");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("İMM teminatlar yüklenirken hata: " + ex.Message);
+            }
         }
 
         private void CreateBottomPanel()

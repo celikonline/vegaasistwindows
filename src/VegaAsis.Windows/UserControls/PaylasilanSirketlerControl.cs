@@ -20,8 +20,10 @@ namespace VegaAsis.Windows.UserControls
         private TextBox _txtAcenteKodu;
         private Button _btnPaylas;
         private SplitContainer _splitMain;
+        private bool _splitterInitialized;
         private DataGridView _dgvPaylasilanlar;
         private DataGridView _dgvAlinanlar;
+        private Button _btnYenile;
         private Button _btnKaldir;
         private List<SharedCompanyDto> _sharedList;
         private List<ReceivedCompanyShareDto> _receivedList;
@@ -215,10 +217,11 @@ namespace VegaAsis.Windows.UserControls
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
-                SplitterDistance = 400,
-                Panel1MinSize = 200,
-                Panel2MinSize = 200
+                Panel1MinSize = 0,
+                Panel2MinSize = 0,
+                SplitterDistance = 0
             };
+            _splitMain.Resize += SplitMain_Resize;
 
             var p1 = new Panel { Dock = DockStyle.Fill, Padding = new Padding(4) };
             var lbl1 = new Label { Text = "Benim Paylaştıklarım", Font = new Font("Segoe UI", 9F, FontStyle.Bold), Dock = DockStyle.Top, Height = 24 };
@@ -235,6 +238,20 @@ namespace VegaAsis.Windows.UserControls
             _splitMain.Panel2.Controls.Add(p2);
 
             Controls.Add(_splitMain);
+        }
+
+        private void SplitMain_Resize(object sender, EventArgs e)
+        {
+            if (_splitterInitialized) return;
+            const int panel1Min = 200;
+            const int panel2Min = 200;
+            int w = _splitMain.Width;
+            if (w < panel1Min + panel2Min) return;
+            _splitterInitialized = true;
+            _splitMain.Resize -= SplitMain_Resize;
+            _splitMain.Panel1MinSize = panel1Min;
+            _splitMain.Panel2MinSize = panel2Min;
+            _splitMain.SplitterDistance = Math.Max(panel1Min, Math.Min(400, w - panel2Min));
         }
 
         private DataGridView CreateDgv(bool isShared)
@@ -282,11 +299,24 @@ namespace VegaAsis.Windows.UserControls
                 Padding = new Padding(8)
             };
 
+            _btnYenile = new Button
+            {
+                Text = "Yenile",
+                Size = new Size(90, 32),
+                Location = new Point(8, 9),
+                BackColor = Color.FromArgb(33, 150, 243),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            _btnYenile.FlatAppearance.BorderSize = 0;
+            _btnYenile.Click += async (s, ev) => await LoadDataAsync();
+
             _btnKaldir = new Button
             {
-                Text = "Kaldır",
-                Size = new Size(100, 32),
-                Location = new Point(8, 9),
+                Text = "Paylaşımı Kaldır",
+                Size = new Size(120, 32),
+                Location = new Point(106, 9),
                 BackColor = Color.FromArgb(198, 40, 40),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -295,6 +325,7 @@ namespace VegaAsis.Windows.UserControls
             _btnKaldir.FlatAppearance.BorderSize = 0;
             _btnKaldir.Click += BtnKaldir_Click;
 
+            bottomPanel.Controls.Add(_btnYenile);
             bottomPanel.Controls.Add(_btnKaldir);
             Controls.Add(bottomPanel);
         }

@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Windows;
+using VegaAsis.Windows.Robot;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -28,6 +32,7 @@ namespace VegaAsis.Windows.Forms
         private string _activeCompanyId = "ak";
         private bool _isRunning;
         private bool _isPaused;
+        private IBrowserDriver _browserDriver;
 
         private class CompanyInfo
         {
@@ -49,6 +54,16 @@ namespace VegaAsis.Windows.Forms
             BuildToolbar();
             BuildContentPanel();
             BuildStatusBar();
+            FormClosing += SirketlerRobotForm_FormClosing;
+        }
+
+        private void SirketlerRobotForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_browserDriver != null)
+            {
+                try { _browserDriver.Dispose(); } catch { }
+                _browserDriver = null;
+            }
         }
 
         private void BuildCompanyBar()
@@ -190,7 +205,7 @@ namespace VegaAsis.Windows.Forms
             btnDuraklat.Click += (s, e) => { _isPaused = true; MessageBox.Show("Robot duraklatıldı.", "Bilgi", MessageBoxButtons.OK); };
             x += 91;
             var btnDurdur = new Button { Text = "■ Durdur", Left = x, Top = 6, Width = 75, Height = 26, FlatStyle = FlatStyle.Flat, ForeColor = VegaRed };
-            btnDurdur.Click += (s, e) => { _isRunning = false; _isPaused = false; MessageBox.Show("Robot durduruldu.", "Bilgi", MessageBoxButtons.OK); };
+            btnDurdur.Click += (s, e) => DurdurBrowser();
             x += 81;
             var btnYeni = new Button { Text = "+ Yeni", Left = x, Top = 6, Width = 55, Height = 26, FlatStyle = FlatStyle.Flat };
             btnYeni.Click += (s, e) =>
@@ -223,10 +238,127 @@ namespace VegaAsis.Windows.Forms
         private void ShowBaslatMenu(Control owner)
         {
             var menu = new ContextMenuStrip();
+            menu.Items.Add("Chrome ile Aç", null, (s, e) => BaslatChrome());
+            menu.Items.Add("Tümüne Giriş (sıralı)", null, (s, e) => TumuneGiris());
+            menu.Items.Add("Tümünden Teklif Al", null, (s, e) => TumundenTeklifAl());
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Trafik Sorgu", null, (s, e) => { _isRunning = true; _isPaused = false; MessageBox.Show("Trafik sorgu başlatıldı.", "Bilgi"); });
             menu.Items.Add("Kasko Sorgu", null, (s, e) => { _isRunning = true; _isPaused = false; MessageBox.Show("Kasko sorgu başlatıldı.", "Bilgi"); });
             menu.Items.Add("Tss Sorgu", null, (s, e) => { _isRunning = true; _isPaused = false; MessageBox.Show("Tss sorgu başlatıldı.", "Bilgi"); });
             menu.Show(owner, new Point(0, owner.Height));
+        }
+
+        private void DurdurBrowser()
+        {
+            _isRunning = false;
+            _isPaused = false;
+            if (_browserDriver != null)
+            {
+                try { _browserDriver.Dispose(); }
+                catch { }
+                _browserDriver = null;
+            }
+            UpdateStatusLabel(GetCompany(_activeCompanyId)?.Name ?? "?");
+            MessageBox.Show("Robot durduruldu.", "Bilgi", MessageBoxButtons.OK);
+        }
+
+        private async void TumuneGiris()
+        {
+            if (_browserDriver == null)
+            {
+                try { _browserDriver = new ChromeBrowserDriver(headless: false); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Chrome başlatılamadı: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            _isRunning = true;
+            List<string> companyIds = null;
+            try
+            {
+                if (ServiceLocator.IsInitialized)
+                {
+                    var settings = ServiceLocator.Resolve<ICompanySettingsService>();
+                    if (settings != null) companyIds = await settings.GetSelectedCompaniesAsync().ConfigureAwait(true);
+                }
+            }
+            catch { /* seçili şirket servisi yoksa _companies kullanılır */ }
+            if (companyIds == null || companyIds.Count == 0)
+                companyIds = _companies.Select(c => c.Id).ToList();
+            var results = await AllLoginsRunner.RunAsync(_browserDriver, companyIds).ConfigureAwait(true);
+            _isRunning = false;
+            var msg = results.Count > 0 ? string.Join("\r\n", results.Select(r => r.CompanyName + ": " + (r.Success ? "OK" : r.Message))) : "Şirket listesi boş.";
+            MessageBox.Show("Tümüne Giriş özeti:\r\n" + msg, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void TumundenTeklifAl()
+        {
+            if (_browserDriver == null)
+            {
+                try { _browserDriver = new ChromeBrowserDriver(headless: false); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Chrome başlatılamadı: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            List<string> companyIds = null;
+            try
+            {
+                if (ServiceLocator.IsInitialized)
+                {
+                    var settings = ServiceLocator.Resolve<ICompanySettingsService>();
+                    if (settings != null) companyIds = await settings.GetSelectedCompaniesAsync().ConfigureAwait(true);
+                }
+            }
+            catch { }
+            if (companyIds == null || companyIds.Count == 0)
+                companyIds = _companies.Select(c => c.Id).ToList();
+            var offerParams = new { Plaka = "34ABC123", Tckn = "12345678901" };
+            _isRunning = true;
+            var results = await AllOffersRunner.RunAsync(_browserDriver, companyIds, offerParams).ConfigureAwait(true);
+            _isRunning = false;
+            var msg = results.Count > 0 ? string.Join("\r\n", results.Select(r => r.CompanyName + ": " + (r.LoginSuccess ? r.OfferResult : r.OfferResult))) : "Şirket listesi boş.";
+            MessageBox.Show("Tümünden Teklif Al özeti:\r\n" + msg, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void BaslatChrome()
+        {
+            var c = GetCompany(_activeCompanyId);
+            if (c == null || string.IsNullOrWhiteSpace(c.Url))
+            {
+                MessageBox.Show("Aktif şirket veya URL bulunamadı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (_browserDriver != null)
+            {
+                try { _browserDriver.Dispose(); } catch { }
+                _browserDriver = null;
+            }
+            try
+            {
+                _browserDriver = new ChromeBrowserDriver(headless: false);
+                var robot = CompanyRobotRegistry.GetRobot(c.Id);
+                if (robot != null)
+                {
+                    var ok = await robot.LoginAsync(_browserDriver).ConfigureAwait(true);
+                    _isRunning = true;
+                    UpdateStatusLabel(c.Name);
+                    MessageBox.Show(ok ? "Chrome açıldı: " + c.Name : "Chrome açıldı; giriş adımı tamamlandı veya beklemede.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    _browserDriver.Navigate(c.Url);
+                    _isRunning = true;
+                    UpdateStatusLabel(c.Name);
+                    MessageBox.Show("Chrome açıldı: " + c.Name + "\nURL: " + c.Url, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Chrome başlatılamadı: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void AcPoliceKaydetDialog()

@@ -30,6 +30,8 @@ namespace VegaAsis.Core.DTOs
         public bool AcentemGonderildi { get; set; }
         public bool AcentemWebeGonderildi { get; set; }
         public string Meslek { get; set; }
+        public string KullanimTarzi { get; set; }
+        public string AracMarkasi { get; set; }
         public string ArsivDonemi { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

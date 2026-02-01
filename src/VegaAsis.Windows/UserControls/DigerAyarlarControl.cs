@@ -10,6 +10,7 @@ namespace VegaAsis.Windows.UserControls
     {
         private readonly IAppSettingsService _appSettingsService;
         private SplitContainer _splitContainer;
+        private bool _splitterInitialized;
         private GroupBox _grpGorselAyarlar;
         private PictureBox _picLogo;
         private Button _btnLogoSec;
@@ -113,15 +114,30 @@ namespace VegaAsis.Windows.UserControls
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Horizontal,
-                SplitterDistance = 200,
-                Panel1MinSize = 150,
-                Panel2MinSize = 200
+                Panel1MinSize = 0,
+                Panel2MinSize = 0,
+                SplitterDistance = 0
             };
+            _splitContainer.Resize += SplitContainer_Resize;
 
             BuildPanel1(_splitContainer.Panel1);
             BuildPanel2(_splitContainer.Panel2);
 
             Controls.Add(_splitContainer);
+        }
+
+        private void SplitContainer_Resize(object sender, EventArgs e)
+        {
+            if (_splitterInitialized) return;
+            const int panel1Min = 150;
+            const int panel2Min = 200;
+            int h = _splitContainer.Height;
+            if (h < panel1Min + panel2Min) return;
+            _splitterInitialized = true;
+            _splitContainer.Resize -= SplitContainer_Resize;
+            _splitContainer.Panel1MinSize = panel1Min;
+            _splitContainer.Panel2MinSize = panel2Min;
+            _splitContainer.SplitterDistance = Math.Max(panel1Min, Math.Min(200, h - panel2Min));
         }
 
         private void BuildPanel1(Panel panel)
@@ -197,12 +213,23 @@ namespace VegaAsis.Windows.UserControls
                 Padding = new Padding(4)
             };
 
-            int y = 8;
+            var lblAdminInfo = new Label
+            {
+                Text = "Bu ayarlar yönetici yetkisi gerektirir.",
+                Location = new Point(8, 8),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(100, 100, 100),
+                Font = new Font("Segoe UI", 9F),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            scrollPanel.Controls.Add(lblAdminInfo);
+
+            int y = 32;
 
             // SMS Ayarları GroupBox
             _grpSmsAyarlari = new GroupBox
             {
-                Text = "SMS Ayarları",
+                Text = "SMS / Captcha Ayarları",
                 Location = new Point(8, y),
                 Size = new Size(400, 120),
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),

@@ -59,6 +59,8 @@ namespace VegaAsis.Data.Services
                 AcentemGonderildi = dto.AcentemGonderildi,
                 AcentemWebeGonderildi = dto.AcentemWebeGonderildi,
                 Meslek = dto.Meslek,
+                KullanimTarzi = dto.KullanimTarzi,
+                AracMarkasi = dto.AracMarkasi,
                 ArsivDonemi = dto.ArsivDonemi ?? "Aktif Dönem (2022 ve Sonrası)",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -100,6 +102,8 @@ namespace VegaAsis.Data.Services
             entity.AcentemGonderildi = dto.AcentemGonderildi;
             entity.AcentemWebeGonderildi = dto.AcentemWebeGonderildi;
             entity.Meslek = dto.Meslek;
+            entity.KullanimTarzi = dto.KullanimTarzi;
+            entity.AracMarkasi = dto.AracMarkasi;
             entity.ArsivDonemi = dto.ArsivDonemi;
             entity.UpdatedAt = DateTime.UtcNow;
 
@@ -182,6 +186,8 @@ namespace VegaAsis.Data.Services
                 AcentemGonderildi = e.AcentemGonderildi,
                 AcentemWebeGonderildi = e.AcentemWebeGonderildi,
                 Meslek = e.Meslek,
+                KullanimTarzi = e.KullanimTarzi,
+                AracMarkasi = e.AracMarkasi,
                 ArsivDonemi = e.ArsivDonemi,
                 CreatedAt = e.CreatedAt,
                 UpdatedAt = e.UpdatedAt

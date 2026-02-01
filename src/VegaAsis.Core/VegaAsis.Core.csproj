@@ -42,6 +42,15 @@
     <Compile Include="Contracts\IUserGroupService.cs" />
     <Compile Include="Contracts\IUserManagementService.cs" />
     <Compile Include="Contracts\IAnnouncementService.cs" />
+    <Compile Include="Contracts\IDaskService.cs" />
+    <Compile Include="Contracts\IKaskoService.cs" />
+    <Compile Include="Contracts\IImmService.cs" />
+    <Compile Include="Contracts\IKonutService.cs" />
+    <Compile Include="Contracts\ITssService.cs" />
+    <Compile Include="Contracts\ITramerService.cs" />
+    <Compile Include="Contracts\IUavtService.cs" />
+    <Compile Include="Contracts\ISablonService.cs" />
+    <Compile Include="Contracts\IWsSorguService.cs" />
     <Compile Include="DTOs\AppointmentDto.cs" />
     <Compile Include="DTOs\AppSettingsDto.cs" />
     <Compile Include="DTOs\CompanySettingsDto.cs" />
@@ -57,6 +66,15 @@
     <Compile Include="DTOs\UserDataDto.cs" />
     <Compile Include="DTOs\UserGroupDto.cs" />
     <Compile Include="DTOs\UserSettingsDto.cs" />
+    <Compile Include="DTOs\DaskTeminatDto.cs" />
+    <Compile Include="DTOs\KaskoTeminatDto.cs" />
+    <Compile Include="DTOs\ImmTeminatDto.cs" />
+    <Compile Include="DTOs\KonutTeminatDto.cs" />
+    <Compile Include="DTOs\TssBireyDto.cs" />
+    <Compile Include="DTOs\TramerSonucDto.cs" />
+    <Compile Include="DTOs\UavtSonucDto.cs" />
+    <Compile Include="DTOs\SablonDto.cs" />
+    <Compile Include="DTOs\WSTeklifSonucDto.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

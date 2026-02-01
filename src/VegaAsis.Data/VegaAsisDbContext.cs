@@ -3,6 +3,10 @@ using VegaAsis.Data.Entities;
 
 namespace VegaAsis.Data
 {
+    /// <summary>
+    /// EF6 DbContext – PostgreSQL (Npgsql). Bağlantı dizesi: App.config / connectionStrings / VegaAsisDbContext.
+    /// Migration: Code First ile şema uyumluluğu için gerekirse Add-Migration / Update-Database kullanılır.
+    /// </summary>
     public class VegaAsisDbContext : DbContext
     {
         public VegaAsisDbContext()

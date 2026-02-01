@@ -21,10 +21,12 @@ namespace VegaAsis.Windows.Forms
         private CheckBox _chkTarihFiltre;
         private DateTimePicker _dtpBaslangic, _dtpBitis;
         private List<PolicyDto> _allPolicies = new List<PolicyDto>();
+        private readonly string _initialPoliceNo;
 
-        public PolicelerimForm(IPolicyService policyService)
+        public PolicelerimForm(IPolicyService policyService, string initialPoliceNo = null)
         {
             _policyService = policyService ?? throw new ArgumentNullException(nameof(policyService));
+            _initialPoliceNo = initialPoliceNo;
             Text = "Policelerim";
             Size = new Size(1000, 600);
             StartPosition = FormStartPosition.CenterParent;
@@ -61,6 +63,16 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(panel);
 
             Load += (s, e) => _ = LoadPoliciesAsync();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            if (!string.IsNullOrEmpty(_initialPoliceNo) && _txtArama != null)
+            {
+                _txtArama.Text = _initialPoliceNo;
+                ApplyFilter();
+            }
         }
 
         private Panel BuildFilterPanel()

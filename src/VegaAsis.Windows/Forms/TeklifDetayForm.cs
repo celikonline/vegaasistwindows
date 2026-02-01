@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using VegaAsis.Core.Contracts;
 using VegaAsis.Core.DTOs;
+using VegaAsis.Windows.Data;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -14,7 +15,7 @@ namespace VegaAsis.Windows.Forms
         private readonly Guid _userId;
         private readonly OfferDto _existing;
         private TextBox _txtMusteri, _txtSirket, _txtPlaka, _txtTelefon, _txtAciklama;
-        private ComboBox _cmbPoliceTipi;
+        private ComboBox _cmbPoliceTipi, _cmbKullanimTarzi, _cmbMarka;
         private CheckBox _chkCalisildi;
         private Button _btnKaydet, _btnIptal;
 
@@ -26,7 +27,7 @@ namespace VegaAsis.Windows.Forms
             _existing = existing;
 
             Text = existing == null ? "Yeni Teklif" : "Teklif Düzenle";
-            Size = new Size(480, 380);
+            Size = new Size(480, 460);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
 
@@ -48,6 +49,30 @@ namespace VegaAsis.Windows.Forms
             _cmbPoliceTipi.Items.AddRange(new object[] { "TRAFİK", "KASKO", "TSS", "DASK", "KONUT", "İMM" });
             _cmbPoliceTipi.SelectedIndex = 0;
             Controls.Add(_cmbPoliceTipi);
+            y += 32;
+            AddLabel("Kullanım Tarzı:", 12, y);
+            _cmbKullanimTarzi = new ComboBox
+            {
+                Left = 120,
+                Top = y - 2,
+                Width = 260,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbKullanimTarzi.Items.AddRange(KullanimTarziOptions.List);
+            if (_cmbKullanimTarzi.Items.Count > 0) _cmbKullanimTarzi.SelectedIndex = 0;
+            Controls.Add(_cmbKullanimTarzi);
+            y += 32;
+            AddLabel("Araç Markası:", 12, y);
+            _cmbMarka = new ComboBox
+            {
+                Left = 120,
+                Top = y - 2,
+                Width = 260,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbMarka.Items.AddRange(VehicleBrandsAndTypes.GetBrandDisplays());
+            if (_cmbMarka.Items.Count > 0) _cmbMarka.SelectedIndex = 0;
+            Controls.Add(_cmbMarka);
             y += 32;
             AddLabel("Plaka:", 12, y);
             _txtPlaka = AddTextBox(120, y - 2, 160);
@@ -79,6 +104,16 @@ namespace VegaAsis.Windows.Forms
                 _chkCalisildi.Checked = existing.Calisildi;
                 var idx = _cmbPoliceTipi.Items.IndexOf(existing.PoliceTipi);
                 if (idx >= 0) _cmbPoliceTipi.SelectedIndex = idx;
+                if (!string.IsNullOrWhiteSpace(existing.KullanimTarzi))
+                {
+                    var ktIdx = _cmbKullanimTarzi.Items.IndexOf(existing.KullanimTarzi);
+                    if (ktIdx >= 0) _cmbKullanimTarzi.SelectedIndex = ktIdx;
+                }
+                if (!string.IsNullOrWhiteSpace(existing.AracMarkasi))
+                {
+                    var mIdx = _cmbMarka.Items.IndexOf(existing.AracMarkasi);
+                    if (mIdx >= 0) _cmbMarka.SelectedIndex = mIdx;
+                }
             }
         }
 
@@ -108,6 +143,11 @@ namespace VegaAsis.Windows.Forms
             {
                 _btnKaydet.Enabled = false;
                 OfferDto dto;
+                var kullanimTarziVal = _cmbKullanimTarzi?.SelectedItem?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(kullanimTarziVal) || string.Equals(kullanimTarziVal, "KULLANIM TARZI SEÇİNİZ", StringComparison.OrdinalIgnoreCase))
+                    kullanimTarziVal = null;
+                var aracMarkasiVal = _cmbMarka?.SelectedItem?.ToString()?.Trim();
+
                 if (_offerId.HasValue && _existing != null)
                 {
                     dto = new OfferDto
@@ -138,6 +178,8 @@ namespace VegaAsis.Windows.Forms
                         AcentemGonderildi = _existing.AcentemGonderildi,
                         AcentemWebeGonderildi = _existing.AcentemWebeGonderildi,
                         Meslek = _existing.Meslek,
+                        KullanimTarzi = kullanimTarziVal,
+                        AracMarkasi = string.IsNullOrWhiteSpace(aracMarkasiVal) ? null : aracMarkasiVal,
                         ArsivDonemi = _existing.ArsivDonemi,
                         CreatedAt = _existing.CreatedAt,
                         UpdatedAt = DateTime.UtcNow
@@ -154,7 +196,9 @@ namespace VegaAsis.Windows.Forms
                         Plaka = _txtPlaka.Text?.Trim(),
                         Telefon = _txtTelefon.Text?.Trim(),
                         Aciklama = _txtAciklama.Text?.Trim(),
-                        Calisildi = _chkCalisildi.Checked
+                        Calisildi = _chkCalisildi.Checked,
+                        KullanimTarzi = kullanimTarziVal,
+                        AracMarkasi = string.IsNullOrWhiteSpace(aracMarkasiVal) ? null : aracMarkasiVal
                     };
                     await _offerService.CreateAsync(dto, _userId).ConfigureAwait(true);
                 }

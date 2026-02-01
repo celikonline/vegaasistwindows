@@ -20,16 +20,18 @@ namespace VegaAsis.Windows.Forms
         private ComboBox _cmbPersonel, _cmbPoliceTipi, _cmbKaynak, _cmbArsiv;
         private TextBox _txtArama;
         private List<OfferDto> _allOffers = new List<OfferDto>();
+        private readonly string _initialTeklifNo;
 
         private static readonly string[] PersonelListesi = { "TÜMÜ", "BATUHAN", "DENEME", "DİLBER", "ELİF", "ENES", "FEYYAZ KAHYA", "GÜLTUNAY", "METİN", "MUHTEREM", "SONER", "YASEMİN", "İLKNUR" };
         private static readonly string[] KayitKaynaklari = { "TÜMÜ", "Manuel", "Open Acentem", "Web HT", "Web Servis" };
         private static readonly string[] ArsivDonemleri = { "Aktif Dönem (2022 ve Sonrası)", "Arşiv_2021H1", "Arşiv_2020", "Arşiv_2019" };
         private static readonly string[] PoliceTipleri = { "TÜMÜ", "TRAFİK", "KASKO", "TSS", "DASK" };
 
-        public TekliflerForm(IAuthService authService, IOfferService offerService)
+        public TekliflerForm(IAuthService authService, IOfferService offerService, string initialTeklifNo = null)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _offerService = offerService ?? throw new ArgumentNullException(nameof(offerService));
+            _initialTeklifNo = initialTeklifNo;
             Text = "Teklifler";
             Size = new Size(1000, 600);
             StartPosition = FormStartPosition.CenterParent;
@@ -76,6 +78,16 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(panel);
 
             Load += (s, e) => _ = LoadOffersAsync();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            if (!string.IsNullOrEmpty(_initialTeklifNo) && _txtArama != null)
+            {
+                _txtArama.Text = _initialTeklifNo;
+                ApplyFilter();
+            }
         }
 
         private Panel BuildFilterPanel()
@@ -131,7 +143,8 @@ namespace VegaAsis.Windows.Forms
                 var matchArama = string.IsNullOrEmpty(arama) ||
                     (o.Musteri?.ToUpperInvariant().Contains(arama) ?? false) ||
                     (o.Plaka?.ToUpperInvariant().Contains(arama) ?? false) ||
-                    (o.TcVergi?.Contains(arama) ?? false);
+                    (o.TcVergi?.Contains(arama) ?? false) ||
+                    o.Id.ToString().ToUpperInvariant().Contains(arama);
                 var matchPersonel = personel == "TÜMÜ" || o.Personel == personel;
                 var matchKaynak = kaynak == "TÜMÜ" || o.KayitSekli == kaynak;
                 var matchPolice = police == "TÜMÜ" || o.PoliceTipi == police;

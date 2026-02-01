@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Core.DTOs;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -72,9 +76,13 @@ namespace VegaAsis.Windows.Forms
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);
+
+            AcceptButton = _btnSorgula;
+            CancelButton = _btnKapat;
+            ShowInTaskbar = false;
         }
 
-        private void BtnSorgula_Click(object sender, EventArgs e)
+        private async void BtnSorgula_Click(object sender, EventArgs e)
         {
             var val = _rbPlaka.Checked ? _txtPlaka.Text?.Trim() : _txtSasiNo.Text?.Trim();
             if (string.IsNullOrEmpty(val))
@@ -83,8 +91,43 @@ namespace VegaAsis.Windows.Forms
                 return;
             }
             _dgvSonuclar.Rows.Clear();
-            _dgvSonuclar.Rows.Add(_rbPlaka.Checked ? val : "-", "-", "-", "-", "Beklemede");
-            MessageBox.Show("Tramer sorgusu başlatıldı. (Entegrasyon bekleniyor)", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ITramerService service = null;
+            try
+            {
+                service = ServiceLocator.Resolve<ITramerService>();
+            }
+            catch
+            {
+                MessageBox.Show("Tramer servisi kullanılamıyor.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            IReadOnlyList<TramerSonucDto> list = null;
+            try
+            {
+                if (_rbPlaka.Checked)
+                    list = await service.SorgulaPlakaAsync(val).ConfigureAwait(true);
+                else
+                    list = await service.SorgulaSasiNoAsync(val).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Sorgu hatası: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (list != null)
+            {
+                foreach (var row in list)
+                {
+                    _dgvSonuclar.Rows.Add(
+                        row.Plaka ?? "-",
+                        row.Marka ?? "-",
+                        row.Model ?? "-",
+                        row.HasarTarihi.HasValue ? row.HasarTarihi.Value.ToString("dd.MM.yyyy") : "-",
+                        row.Sirket ?? "-");
+                }
+            }
+            if (_dgvSonuclar.Rows.Count == 0)
+                MessageBox.Show("Sonuç bulunamadı.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

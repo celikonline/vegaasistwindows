@@ -1,6 +1,9 @@
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -36,7 +39,12 @@ namespace VegaAsis.Windows.Forms
         public KaskoTeminatlariForm()
         {
             InitializeComponent();
-            LoadTemelTeminatlar();
+            Shown += KaskoTeminatlariForm_Shown;
+        }
+
+        private async void KaskoTeminatlariForm_Shown(object sender, EventArgs e)
+        {
+            await LoadTemelTeminatlarAsync().ConfigureAwait(true);
         }
 
         private void InitializeComponent()
@@ -241,15 +249,28 @@ namespace VegaAsis.Windows.Forms
             return txt;
         }
 
-        private void LoadTemelTeminatlar()
+        private async Task LoadTemelTeminatlarAsync()
         {
             _dgvTemelTeminatlar.Rows.Clear();
-            
-            _dgvTemelTeminatlar.Rows.Add("Hasar", "Araç Değeri", "%10");
-            _dgvTemelTeminatlar.Rows.Add("Hırsızlık", "Araç Değeri", "%10");
-            _dgvTemelTeminatlar.Rows.Add("Deprem", "Araç Değeri", "%10");
-            _dgvTemelTeminatlar.Rows.Add("Sel/Su Baskını", "Araç Değeri", "%10");
-            _dgvTemelTeminatlar.Rows.Add("Terör", "Araç Değeri", "%10");
+            if (!ServiceLocator.IsInitialized) return;
+            try
+            {
+                var service = ServiceLocator.Resolve<IKaskoService>();
+                if (service == null) return;
+                var list = await service.GetTeminatlarAsync().ConfigureAwait(true);
+                if (list == null) return;
+                foreach (var t in list)
+                {
+                    _dgvTemelTeminatlar.Rows.Add(
+                        t.Ad ?? t.Kod ?? "",
+                        t.Prim.HasValue ? t.Prim.Value.ToString("N2") : "",
+                        t.Aciklama ?? "");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Kasko teminatlar yüklenirken hata: " + ex.Message);
+            }
         }
     }
 }

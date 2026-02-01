@@ -20,12 +20,16 @@ namespace VegaAsis.Data.Services
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         }
 
-        public async Task<IReadOnlyList<WebUserDto>> GetAllAsync(Guid? userId = null)
+        public async Task<IReadOnlyList<WebUserDto>> GetAllAsync(Guid? userId = null, bool? unlicensedAgentOnly = null)
         {
             var query = _db.WebUsers.OrderByDescending(w => w.CreatedAt).AsQueryable();
             if (userId.HasValue)
             {
                 query = query.Where(w => w.UserId == userId.Value);
+            }
+            if (unlicensedAgentOnly.HasValue)
+            {
+                query = query.Where(w => w.UnlicensedAgentOnly == unlicensedAgentOnly.Value);
             }
 
             var list = await query.ToListAsync().ConfigureAwait(false);

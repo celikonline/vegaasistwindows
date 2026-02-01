@@ -16,6 +16,7 @@ namespace VegaAsis.Windows.UserControls
 
         private Panel _topPanel;
         private TextBox _txtAra;
+        private CheckBox _chkUnlicensedOnly;
         private Button _btnYeniKullanici;
         private DataGridView _dgvWebKullanicilari;
         private Panel _bottomPanel;
@@ -51,9 +52,10 @@ namespace VegaAsis.Windows.UserControls
         private async Task LoadDataAsync()
         {
             var userId = _authService?.GetCurrentUserId;
+            bool? unlicensedOnly = _chkUnlicensedOnly?.Checked == true ? (bool?)true : null;
             try
             {
-                var list = await _webUserService.GetAllAsync(userId);
+                var list = await _webUserService.GetAllAsync(userId, unlicensedOnly);
                 _webUsers = new List<WebUserDto>(list ?? new WebUserDto[0]);
                 RefreshGrid();
             }
@@ -95,11 +97,20 @@ namespace VegaAsis.Windows.UserControls
             _txtAra = new TextBox { Width = 200, Location = new Point(45, 13), Font = new Font("Segoe UI", 9F) };
             _txtAra.TextChanged += (s, e) => ApplyFilter();
 
+            _chkUnlicensedOnly = new CheckBox
+            {
+                Text = "Sadece lisanssız acente (unlicensed_agent_only)",
+                AutoSize = true,
+                Location = new Point(255, 15),
+                Font = new Font("Segoe UI", 9F)
+            };
+            _chkUnlicensedOnly.CheckedChanged += (s, e) => { _ = LoadDataAsync(); };
+
             _btnYeniKullanici = new Button
             {
                 Text = "Yeni Web Kullanıcı",
                 Size = new Size(150, 32),
-                Location = new Point(260, 9),
+                Location = new Point(500, 9),
                 BackColor = Color.FromArgb(46, 125, 50),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -108,7 +119,7 @@ namespace VegaAsis.Windows.UserControls
             _btnYeniKullanici.FlatAppearance.BorderSize = 0;
             _btnYeniKullanici.Click += BtnYeniKullanici_Click;
 
-            _topPanel.Controls.AddRange(new Control[] { lblAra, _txtAra, _btnYeniKullanici });
+            _topPanel.Controls.AddRange(new Control[] { lblAra, _txtAra, _chkUnlicensedOnly, _btnYeniKullanici });
             Controls.Add(_topPanel);
         }
 

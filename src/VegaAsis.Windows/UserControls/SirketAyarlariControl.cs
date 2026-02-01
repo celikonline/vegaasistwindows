@@ -24,6 +24,8 @@ namespace VegaAsis.Windows.UserControls
 
         private string _selectedCompanyName;
         private CompanySettingsDto _currentSettings;
+        private SplitContainer _mainSplit;
+        private bool _splitterInitialized;
 
         public SirketAyarlariControl(ICompanySettingsService companySettingsService)
         {
@@ -72,13 +74,15 @@ namespace VegaAsis.Windows.UserControls
 
         private void InitializeComponents()
         {
-            var mainSplit = new SplitContainer
+            _mainSplit = new SplitContainer
             {
                 Dock = DockStyle.Fill,
-                SplitterDistance = 200,
-                Panel1MinSize = 150,
-                Panel2MinSize = 300
+                Panel1MinSize = 0,
+                Panel2MinSize = 0,
+                SplitterDistance = 0,
+                BackColor = SystemColors.Control
             };
+            _mainSplit.Resize += SirketAyarlariSplit_Resize;
 
             // Sol Panel - Şirket Listesi
             var leftPanel = new Panel
@@ -106,7 +110,7 @@ namespace VegaAsis.Windows.UserControls
 
             leftPanel.Controls.Add(lblSirketler);
             leftPanel.Controls.Add(_lstSirketler);
-            mainSplit.Panel1.Controls.Add(leftPanel);
+            _mainSplit.Panel1.Controls.Add(leftPanel);
 
             // Sağ Panel - Şirket Bilgileri
             var rightPanel = new Panel
@@ -165,9 +169,23 @@ namespace VegaAsis.Windows.UserControls
             grpSirketBilgileri.Controls.Add(_btnKaydet);
 
             rightPanel.Controls.Add(grpSirketBilgileri);
-            mainSplit.Panel2.Controls.Add(rightPanel);
+            _mainSplit.Panel2.Controls.Add(rightPanel);
 
-            Controls.Add(mainSplit);
+            Controls.Add(_mainSplit);
+        }
+
+        private void SirketAyarlariSplit_Resize(object sender, EventArgs e)
+        {
+            if (_splitterInitialized) return;
+            const int panel1Min = 150;
+            const int panel2Min = 300;
+            int w = _mainSplit.Width;
+            if (w < panel1Min + panel2Min) return;
+            _splitterInitialized = true;
+            _mainSplit.Resize -= SirketAyarlariSplit_Resize;
+            _mainSplit.Panel1MinSize = panel1Min;
+            _mainSplit.Panel2MinSize = panel2Min;
+            _mainSplit.SplitterDistance = Math.Max(panel1Min, Math.Min(200, w - panel2Min));
         }
 
         private int AddLabelAndTextBox(Control parent, string labelText, int y, out TextBox txt, bool isReadOnly = false, bool isPassword = false)

@@ -83,7 +83,7 @@ namespace VegaAsis.Windows
             mnuAjanda.Click += (s, e) => OpenForm(new AjandaYenilemeForm(_appointmentService));
             mnuSirketlerRobot.Click += (s, e) => OpenForm(new SirketlerRobotForm());
             mnuRaporlar.ShortcutKeys = Keys.Control | Keys.R;
-            mnuRaporlar.Click += (s, e) => OpenForm(new RaporlarForm());
+            mnuRaporlar.Click += (s, e) => OpenForm(new RaporlarForm(_offerService, _policyService));
             mnuDestek.Click += (s, e) => OpenForm(new DestekTalepleriForm());
             mnuDuyurular.Click += (s, e) => OpenForm(new DuyurularForm());
             mnuCanliUretim.Click += (s, e) => OpenForm(new CanliUretimForm());
@@ -155,7 +155,7 @@ namespace VegaAsis.Windows
             indexControl.TekliflerRequested += (s, e) => OpenForm(new TekliflerForm(_authService, _offerService));
             indexControl.PolicelerimRequested += (s, e) => OpenForm(new PolicelerimForm(_policyService));
             indexControl.SirketlerRobotRequested += (s, e) => OpenForm(new SirketlerRobotForm());
-            indexControl.RaporlarRequested += (s, e) => OpenForm(new RaporlarForm());
+            indexControl.RaporlarRequested += (s, e) => OpenForm(new RaporlarForm(_offerService, _policyService));
             indexControl.DestekTalepleriRequested += (s, e) => OpenForm(new DestekTalepleriForm());
             indexControl.AjandaYenilemeRequested += (s, e) => OpenForm(new AjandaYenilemeForm(_appointmentService));
             indexControl.DuyurularRequested += (s, e) => OpenForm(new DuyurularForm());
@@ -166,7 +166,8 @@ namespace VegaAsis.Windows
                 if (branch == "TRAFİK") OpenForm(new TrafikTeklifiForm());
                 else if (branch == "KASKO") OpenForm(new KaskoTeminatlariForm());
                 else if (branch == "TSS") OpenForm(new TssDetaylariForm());
-                else if (branch == "DASK" || branch == "KONUT") OpenForm(new DaskDetaylariForm());
+                else if (branch == "DASK") OpenForm(new DaskDetaylariForm());
+                else if (branch == "KONUT") OpenForm(new KonutTeminatlariForm());
                 else if (branch == "İMM") OpenForm(new ImmTeminatlariForm());
             };
             indexControl.BranchCellClickRequested += (s, e) =>
@@ -178,7 +179,8 @@ namespace VegaAsis.Windows
                 else if (branch == "KASKO") form = new KaskoTeminatlariForm();
                 else if (branch == "SBM") form = new SbmSorgusuForm();
                 else if (branch == "TSS") form = new TssDetaylariForm();
-                else if (branch == "DASK" || branch == "KONUT") form = new DaskDetaylariForm();
+                else if (branch == "DASK") form = new DaskDetaylariForm();
+                else if (branch == "KONUT") form = new KonutTeminatlariForm();
                 else if (branch == "İMM") form = new ImmTeminatlariForm();
                 if (form != null)
                 {
@@ -197,6 +199,9 @@ namespace VegaAsis.Windows
                 if (!userId.HasValue) { MessageBox.Show("Giriş yapmalısınız.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
                 try
                 {
+                    var kullanimTarzi = session.KullanimTarzi;
+                    if (string.IsNullOrWhiteSpace(kullanimTarzi) || string.Equals(kullanimTarzi, "KULLANIM TARZI SEÇİNİZ", StringComparison.OrdinalIgnoreCase))
+                        kullanimTarzi = null;
                     var dto = new OfferDto
                     {
                         Plaka = session.Plaka,
@@ -205,6 +210,8 @@ namespace VegaAsis.Windows
                         Musteri = session.MusteriAdi,
                         Meslek = session.Meslek,
                         DogumTarihi = session.DogumTarihi,
+                        KullanimTarzi = kullanimTarzi,
+                        AracMarkasi = string.IsNullOrWhiteSpace(session.Marka) ? null : session.Marka,
                         PoliceTipi = session.AktifBrans ?? "TRAFİK",
                         Trf = (session.AktifBrans ?? "").IndexOf("TRAFİK", StringComparison.OrdinalIgnoreCase) >= 0,
                         CreatedAt = DateTime.UtcNow,
@@ -225,7 +232,18 @@ namespace VegaAsis.Windows
 
         private void OpenForm(Form form)
         {
-            form.ShowDialog(this);
+            try
+            {
+                form.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message ?? "Form açılırken hata oluştu.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                form?.Dispose();
+            }
         }
 
         private void OpenPoliceNoGit()
@@ -234,8 +252,7 @@ namespace VegaAsis.Windows
             {
                 if (form.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(form.PoliceNo))
                 {
-                    OpenForm(new PolicelerimForm(_policyService));
-                    MessageBox.Show("Poliçe No: " + form.PoliceNo + "\n(Filtre entegrasyonu bekleniyor)", "Poliçe No ile Git", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    OpenForm(new PolicelerimForm(_policyService, form.PoliceNo));
                 }
             }
         }
@@ -246,8 +263,7 @@ namespace VegaAsis.Windows
             {
                 if (form.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(form.TeklifNo))
                 {
-                    OpenForm(new TekliflerForm(_authService, _offerService));
-                    MessageBox.Show("Teklif No: " + form.TeklifNo + "\n(Filtre entegrasyonu bekleniyor)", "Teklif No ile Git", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    OpenForm(new TekliflerForm(_authService, _offerService, form.TeklifNo));
                 }
             }
         }

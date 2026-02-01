@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Core.DTOs;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -71,9 +75,13 @@ namespace VegaAsis.Windows.Forms
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);
+
+            AcceptButton = _btnSorgula;
+            CancelButton = _btnKapat;
+            ShowInTaskbar = false;
         }
 
-        private void BtnSorgula_Click(object sender, EventArgs e)
+        private async void BtnSorgula_Click(object sender, EventArgs e)
         {
             var val = _rbTcKimlik.Checked ? _txtTcVergi.Text?.Trim() : _txtPlaka.Text?.Trim();
             if (string.IsNullOrEmpty(val))
@@ -82,8 +90,42 @@ namespace VegaAsis.Windows.Forms
                 return;
             }
             _dgvSonuclar.Rows.Clear();
-            _dgvSonuclar.Rows.Add("UAVT", DateTime.Now.ToString("dd.MM.yyyy HH:mm"), _rbTcKimlik.Checked ? "TC/Vergi sorgusu" : "Plaka sorgusu", "Beklemede");
-            MessageBox.Show("UAVT sorgusu başlatıldı. (Entegrasyon bekleniyor)", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            IUavtService service = null;
+            try
+            {
+                service = ServiceLocator.Resolve<IUavtService>();
+            }
+            catch
+            {
+                MessageBox.Show("UAVT servisi kullanılamıyor.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            IReadOnlyList<UavtSonucDto> list = null;
+            try
+            {
+                if (_rbTcKimlik.Checked)
+                    list = await service.SorgulaTcVergiAsync(val).ConfigureAwait(true);
+                else
+                    list = await service.SorgulaPlakaAsync(val).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Sorgu hatası: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (list != null)
+            {
+                foreach (var row in list)
+                {
+                    _dgvSonuclar.Rows.Add(
+                        row.Kaynak ?? "-",
+                        row.Tarih.HasValue ? row.Tarih.Value.ToString("dd.MM.yyyy HH:mm") : "-",
+                        row.Aciklama ?? "-",
+                        row.Durum ?? "-");
+                }
+            }
+            if (_dgvSonuclar.Rows.Count == 0)
+                MessageBox.Show("Sonuç bulunamadı.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

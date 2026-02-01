@@ -47,6 +47,7 @@ namespace VegaAsis.Windows.Forms
             _lstBildirimler.Columns[1].Width = 70;
             _lstBildirimler.Columns[2].Width = 120;
             _lstBildirimler.Columns[3].Width = 200;
+            _lstBildirimler.DoubleClick += LstBildirimler_DoubleClick;
             Controls.Add(_lstBildirimler);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 45 };
@@ -57,6 +58,39 @@ namespace VegaAsis.Windows.Forms
             pnlAlt.Controls.Add(_btnTemizle);
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);
+        }
+
+        private void LstBildirimler_DoubleClick(object sender, EventArgs e)
+        {
+            if (_lstBildirimler.SelectedItems.Count == 0) return;
+            var item = _lstBildirimler.SelectedItems[0];
+            var baslik = item.SubItems.Count > 2 ? item.SubItems[2].Text : "";
+            var icerik = item.SubItems.Count > 3 ? item.SubItems[3].Text : "";
+            MessageBox.Show(icerik, string.IsNullOrEmpty(baslik) ? "Bildirim" : baslik, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Tek bir bildirim göstermek için kullanılır.
+        /// </summary>
+        public static void ShowSingle(string baslik, string icerik, Form owner = null)
+        {
+            using (var f = new BildirimEkraniForm())
+            {
+                f.SetSingleNotification(baslik ?? "Bildirim", icerik ?? "");
+                if (owner != null)
+                    f.ShowDialog(owner);
+                else
+                    f.ShowDialog();
+            }
+        }
+
+        /// <summary>
+        /// Listeyi temizleyip tek bildirim gösterir (ShowSingle tarafından kullanılır).
+        /// </summary>
+        public void SetSingleNotification(string baslik, string icerik)
+        {
+            _lstBildirimler.Items.Clear();
+            _lstBildirimler.Items.Add(new ListViewItem(new[] { DateTime.Now.ToString("dd.MM HH:mm"), "Bilgi", baslik, icerik }));
         }
 
         private void OrnekBildirimYukle()

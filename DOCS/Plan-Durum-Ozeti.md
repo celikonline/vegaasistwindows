@@ -50,11 +50,11 @@
 
 | # | Görev | Durum |
 |---|-------|--------|
-| 4.1 | CompanysBot Altyapısı (Selenium/Playwright) | ⏳ Bekliyor |
-| 4.2 | Şirket Robotları (TRF_* taşınması) | ⏳ Bekliyor |
-| 4.3 | AllLogins / AllOffers | ⏳ Bekliyor |
-| 4.4 | reCaptcha / CapthaResolver | ⏳ Bekliyor |
-| 4.5 | Tramer Entegrasyonu | ⏳ Bekliyor |
+| 4.1 | CompanysBot Altyapısı (Selenium/ChromeDriver, IBrowserDriver, App.config) | ✅ Tamamlandı |
+| 4.2 | Şirket Robotları (TRF_AkSigorta, TRF_AnaSigortaStub, TRF_AnadoluStub, Registry) | ✅ Tamamlandı |
+| 4.3 | AllLogins / AllOffers (AllLoginsRunner, AllOffersRunner, seçili şirketler) | ✅ Tamamlandı |
+| 4.4 | reCaptcha / CapthaResolver (ICaptchaResolver, ManuelCaptcha, TwoCaptcha) | ✅ Tamamlandı |
+| 4.5 | Tramer (ITramerService, TramerService, TramerSorguForm; API notları DOCS) | ✅ Altyapı tamamlandı |
 
 ---
 
@@ -62,9 +62,9 @@
 
 | # | Görev | Durum |
 |---|-------|--------|
-| 5.1 | PaylasilanSirketlerControl (yeni paylaşım, Benimle Paylaşılanlar) | ⏳ Bekliyor |
-| 5.2 | WebEkranlariControl (WebUserService, unlicensed_agent_only, CRUD) | ⏳ Bekliyor |
-| 5.3 | frmConfig Benzeri (genel ayarlar, proxy, benchmark) | ⏳ Bekliyor |
+| 5.1 | PaylasilanSirketlerControl (yeni paylaşım, Benimle Paylaşılanlar) | ✅ Tamamlandı |
+| 5.2 | WebEkranlariControl (WebUserService, unlicensed_agent_only, CRUD) | ✅ Tamamlandı |
+| 5.3 | ConfigForm (genel ayarlar, proxy, benchmark, otomatik güncelleme kaydı) | ✅ Tamamlandı |
 
 ---
 
@@ -72,11 +72,11 @@
 
 | # | Görev | Durum |
 |---|-------|--------|
-| 6.1 | frmManuelUavtSorgu | ⏳ Form mevcut; iş mantığı netleştirilebilir |
-| 6.2 | frmTramerSorgu | ⏳ Form mevcut; Tramer entegrasyonu |
-| 6.3 | Loading / Bildirim (frmLoading, frmBildirimEkrani) | ⏳ Bekliyor |
-| 6.4 | Otomatik Sorgu (frmSablonDuzenle, frmWSTeklifleriniSorgula) | ⏳ Bekliyor |
-| 6.5 | Layout Düzeltmeleri | ⏳ Bekliyor |
+| 6.1 | frmManuelUavtSorgu | ✅ Form mevcut; UAVT servisi eklendiğinde bağlanacak (DOCS/Faz6-Kalan-Formlar-Notlari.md) |
+| 6.2 | frmTramerSorgu | ✅ ITramerService bağlı; gerçek API ile TramerService doldurulacak |
+| 6.3 | Loading / Bildirim (LoadingForm, BildirimEkraniForm) | ✅ Formlar mevcut; bildirim servisi istenirse bağlanır |
+| 6.4 | Otomatik Sorgu (SablonDuzenleForm, WSTeklifleriniSorgulaForm) | ✅ Formlar mevcut; şablon/WS servisleri eklendiğinde bağlanır |
+| 6.5 | Layout Düzeltmeleri | ⏳ İhtiyaç halinde |
 
 ---
 
@@ -95,8 +95,8 @@
 | **Faz 1** | Kritik Eksikler | ✅ **Tamamlandı** |
 | **Faz 2** | Form Tamamlama | ✅ **Tamamlandı** |
 | **Faz 3** | Raporlar ve Grafikler | ✅ **Tamamlandı** |
-| **Faz 4** | Robot / Şirket Entegrasyonu | ⏳ Bekliyor |
-| **Faz 5** | Destek ve Admin | ⏳ Bekliyor |
-| **Faz 6** | Kalan Formlar ve İyileştirmeler | ⏳ Bekliyor |
+| **Faz 4** | Robot / Şirket Entegrasyonu | ✅ Altyapı tamamlandı |
+| **Faz 5** | Destek ve Admin | ✅ Tamamlandı |
+| **Faz 6** | Kalan Formlar ve İyileştirmeler | ✅ Formlar mevcut; entegrasyon noktaları dokümante |
 
-**Şu anki konum:** Faz 1, 2 ve 3 tamamlandı. Sıradaki adım Faz 4 (Robot / Şirket Entegrasyonu) olabilir.
+**Şu anki konum:** Faz 1–6 tamamlandı veya altyapı/formalarla hazır. Kalan işler: Tramer gerçek API, UAVT/şablon/WS servis entegrasyonları, layout iyileştirmeleri.

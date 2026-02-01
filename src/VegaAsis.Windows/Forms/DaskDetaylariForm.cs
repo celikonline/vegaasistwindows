@@ -1,7 +1,9 @@
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using VegaAsis.Windows.Data;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -21,6 +23,7 @@ namespace VegaAsis.Windows.Forms
         private TextBox _txtAcikAdres;
 
         // Teminat Bilgileri
+        private DataGridView _dgvTeminatlar;
         private Label _lblTeminatTutari;
         private Label _lblPrimTutari;
 
@@ -30,12 +33,18 @@ namespace VegaAsis.Windows.Forms
         public DaskDetaylariForm()
         {
             InitializeComponent();
+            Shown += DaskDetaylariForm_Shown;
+        }
+
+        private async void DaskDetaylariForm_Shown(object sender, EventArgs e)
+        {
+            await LoadTeminatlarAsync().ConfigureAwait(true);
         }
 
         private void InitializeComponent()
         {
             Text = "DASK Detayları";
-            Size = new Size(600, 500);
+            Size = new Size(600, 580);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -68,7 +77,7 @@ namespace VegaAsis.Windows.Forms
             {
                 Text = "Teminat Bilgileri",
                 Location = new Point(12, 358),
-                Size = new Size(570, 80),
+                Size = new Size(570, 200),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             CreateTeminatBilgileriGroup(grpTeminatBilgileri);
@@ -207,6 +216,7 @@ namespace VegaAsis.Windows.Forms
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             CmbIl_SelectedIndexChanged(_cmbIl, EventArgs.Empty);
+            _cmbIlce.SelectedIndexChanged += (s, e) => LoadTeminatlarAsync().ConfigureAwait(true);
             groupBox.Controls.Add(_cmbIlce);
             y += spacing;
 
@@ -231,12 +241,35 @@ namespace VegaAsis.Windows.Forms
 
         private void CreateTeminatBilgileriGroup(GroupBox groupBox)
         {
-            var y = 25;
+            _dgvTeminatlar = new DataGridView
+            {
+                Location = new Point(15, 25),
+                Size = new Size(480, 90),
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                RowHeadersVisible = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            _dgvTeminatlar.Columns.Add("Kod", "Kod");
+            _dgvTeminatlar.Columns.Add("Ad", "Teminat Adı");
+            _dgvTeminatlar.Columns.Add("Prim", "Prim");
+            _dgvTeminatlar.Columns.Add("Secili", "Seçili");
+            groupBox.Controls.Add(_dgvTeminatlar);
+
+            var btnYenile = new Button
+            {
+                Text = "Yenile",
+                Location = new Point(505, 25),
+                Size = new Size(60, 26)
+            };
+            btnYenile.Click += (s, e) => LoadTeminatlarAsync().ConfigureAwait(true);
+            groupBox.Controls.Add(btnYenile);
+
+            var y = 120;
             const int leftOffset = 15;
             const int spacing = 30;
 
-            // Teminat Tutarı
-            var lblTeminatLabel = AddLabel(groupBox, "Teminat Tutarı:", leftOffset, y, 120);
+            AddLabel(groupBox, "Teminat Tutarı:", leftOffset, y, 120);
             _lblTeminatTutari = new Label
             {
                 Text = "0,00 TL",
@@ -248,8 +281,7 @@ namespace VegaAsis.Windows.Forms
             groupBox.Controls.Add(_lblTeminatTutari);
             y += spacing;
 
-            // Prim Tutarı
-            var lblPrimLabel = AddLabel(groupBox, "Prim Tutarı:", leftOffset, y, 120);
+            AddLabel(groupBox, "Prim Tutarı:", leftOffset, y, 120);
             _lblPrimTutari = new Label
             {
                 Text = "0,00 TL",
@@ -260,6 +292,30 @@ namespace VegaAsis.Windows.Forms
                 Font = new Font(DefaultFont, FontStyle.Bold)
             };
             groupBox.Controls.Add(_lblPrimTutari);
+        }
+
+        private async Task LoadTeminatlarAsync()
+        {
+            if (_dgvTeminatlar == null) return;
+            _dgvTeminatlar.Rows.Clear();
+            if (!ServiceLocator.IsInitialized) return;
+            try
+            {
+                var service = ServiceLocator.Resolve<VegaAsis.Core.Contracts.IDaskService>();
+                if (service == null) return;
+                var il = _cmbIl?.SelectedItem?.ToString();
+                var ilce = _cmbIlce?.SelectedItem?.ToString();
+                var list = await service.GetTeminatlarAsync(il, ilce).ConfigureAwait(true);
+                if (list == null) return;
+                foreach (var t in list)
+                {
+                    _dgvTeminatlar.Rows.Add(t.Kod ?? "", t.Ad ?? "", t.Prim.HasValue ? t.Prim.Value.ToString("N2") : "", t.Secili ? "Evet" : "Hayır");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("DASK teminatlar yüklenirken hata: " + ex.Message);
+            }
         }
 
         private Label AddLabel(GroupBox groupBox, string text, int x, int y, int width)
@@ -285,6 +341,7 @@ namespace VegaAsis.Windows.Forms
             foreach (var d in TurkeyLocations.GetDistrictsByCity(city))
                 _cmbIlce.Items.Add(d);
             if (_cmbIlce.Items.Count > 0) _cmbIlce.SelectedIndex = 0;
+            LoadTeminatlarAsync().ConfigureAwait(true);
         }
 
         private TextBox AddTextBox(GroupBox groupBox, int x, int y, int width)

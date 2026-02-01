@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -19,6 +21,9 @@ namespace VegaAsis.Windows.Forms
         // Teminat Limitleri
         private DataGridView _dgvTeminatLimitleri;
 
+        // Aile Bireyleri (Servis)
+        private DataGridView _dgvAileBireyleri;
+
         // Alt Panel
         private Label _lblAylikPrim;
         private Button _btnKapat;
@@ -27,12 +32,18 @@ namespace VegaAsis.Windows.Forms
         public TssDetaylariForm()
         {
             InitializeComponent();
+            Shown += TssDetaylariForm_Shown;
+        }
+
+        private async void TssDetaylariForm_Shown(object sender, EventArgs e)
+        {
+            await LoadAileBireyleriAsync().ConfigureAwait(true);
         }
 
         private void InitializeComponent()
         {
             Text = "TSS Detayları";
-            Size = new Size(600, 500);
+            Size = new Size(600, 620);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -66,10 +77,34 @@ namespace VegaAsis.Windows.Forms
                 Text = "Teminat Limitleri",
                 Location = new Point(12, 238),
                 Size = new Size(570, 200),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             CreateTeminatLimitleriGroup(grpTeminatLimitleri);
             Controls.Add(grpTeminatLimitleri);
+
+            // Aile Bireyleri GroupBox (Servis)
+            var grpAileBireyleri = new GroupBox
+            {
+                Text = "Aile Bireyleri",
+                Location = new Point(12, 446),
+                Size = new Size(570, 120),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            _dgvAileBireyleri = new DataGridView
+            {
+                Location = new Point(15, 25),
+                Size = new Size(540, 85),
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                RowHeadersVisible = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            _dgvAileBireyleri.Columns.Add("Ad", "Ad");
+            _dgvAileBireyleri.Columns.Add("DogumTarihi", "Doğum Tarihi");
+            _dgvAileBireyleri.Columns.Add("Cinsiyet", "Cinsiyet");
+            _dgvAileBireyleri.Columns.Add("Prim", "Prim");
+            grpAileBireyleri.Controls.Add(_dgvAileBireyleri);
+            Controls.Add(grpAileBireyleri);
 
             // Bottom Panel
             _bottomPanel = new Panel
@@ -210,7 +245,6 @@ namespace VegaAsis.Windows.Forms
             _dgvTeminatLimitleri.Columns.Add("Limit", "Limit");
             _dgvTeminatLimitleri.Columns.Add("Muafiyet", "Muafiyet");
 
-            // Örnek verileri ekle
             _dgvTeminatLimitleri.Rows.Add("Yatarak Tedavi", "500.000 TL", "10%");
             _dgvTeminatLimitleri.Rows.Add("Ayakta Tedavi", "50.000 TL", "5%");
             _dgvTeminatLimitleri.Rows.Add("Ameliyat", "200.000 TL", "15%");
@@ -218,6 +252,32 @@ namespace VegaAsis.Windows.Forms
             _dgvTeminatLimitleri.Rows.Add("Diş Tedavisi", "30.000 TL", "10%");
 
             groupBox.Controls.Add(_dgvTeminatLimitleri);
+        }
+
+        private async Task LoadAileBireyleriAsync()
+        {
+            if (_dgvAileBireyleri == null) return;
+            _dgvAileBireyleri.Rows.Clear();
+            if (!ServiceLocator.IsInitialized) return;
+            try
+            {
+                var service = ServiceLocator.Resolve<VegaAsis.Core.Contracts.ITssService>();
+                if (service == null) return;
+                var list = await service.GetAileBireyleriAsync().ConfigureAwait(true);
+                if (list == null) return;
+                foreach (var b in list)
+                {
+                    _dgvAileBireyleri.Rows.Add(
+                        b.Ad ?? "",
+                        b.DogumTarihi.HasValue ? b.DogumTarihi.Value.ToString("dd.MM.yyyy") : "",
+                        b.Cinsiyet ?? "",
+                        b.Prim.HasValue ? b.Prim.Value.ToString("N2") : "");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("TSS aile bireyleri yüklenirken hata: " + ex.Message);
+            }
         }
 
         private Label AddLabel(GroupBox groupBox, string text, int x, int y, int width)

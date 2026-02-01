@@ -16,6 +16,7 @@ namespace VegaAsis.Windows.Forms
         private GroupBox _grpGenel;
         private TextBox _txtVarsayilanTarayici;
         private CheckBox _chkOtomatikGuncelleme;
+        private CheckBox _chkBenchmarkAktif;
         private Button _btnKaydet;
         private Button _btnBenchmark;
         private Button _btnIptal;
@@ -62,7 +63,9 @@ namespace VegaAsis.Windows.Forms
             AddRow(_grpGenel, "Varsayılan tarayıcı:", ref _txtVarsayilanTarayici, ref gy);
             _txtVarsayilanTarayici.Text = "Chrome";
             _chkOtomatikGuncelleme = new CheckBox { Text = "Otomatik güncelleme kontrolü", Location = new Point(12, 58), AutoSize = true, Checked = true };
+            _chkBenchmarkAktif = new CheckBox { Text = "Benchmark testi açık", Location = new Point(12, 78), AutoSize = true };
             _grpGenel.Controls.Add(_chkOtomatikGuncelleme);
+            _grpGenel.Controls.Add(_chkBenchmarkAktif);
             Controls.Add(_grpGenel);
 
             var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 55, Padding = new Padding(12) };
@@ -110,6 +113,9 @@ namespace VegaAsis.Windows.Forms
             _txtProxyPort.Text = ConfigStorage.ProxyPort ?? "8080";
             _txtProxyUser.Text = ConfigStorage.ProxyUser ?? "";
             _txtProxyPass.Text = ConfigStorage.ProxyPass ?? "";
+            _txtVarsayilanTarayici.Text = ConfigStorage.VarsayilanTarayici ?? "Chrome";
+            _chkOtomatikGuncelleme.Checked = ConfigStorage.OtomatikGuncelleme;
+            _chkBenchmarkAktif.Checked = ConfigStorage.BenchmarkAktif;
         }
 
         private void BtnKaydet_Click(object sender, EventArgs e)
@@ -121,6 +127,9 @@ namespace VegaAsis.Windows.Forms
                 ConfigStorage.ProxyPort = _txtProxyPort.Text?.Trim() ?? "8080";
                 ConfigStorage.ProxyUser = _txtProxyUser.Text?.Trim() ?? "";
                 ConfigStorage.ProxyPass = _txtProxyPass.Text?.Trim() ?? "";
+                ConfigStorage.VarsayilanTarayici = _txtVarsayilanTarayici.Text?.Trim() ?? "Chrome";
+                ConfigStorage.OtomatikGuncelleme = _chkOtomatikGuncelleme.Checked;
+                ConfigStorage.BenchmarkAktif = _chkBenchmarkAktif.Checked;
                 ConfigStorage.Save();
                 MessageBox.Show("Ayarlar kaydedildi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
@@ -142,18 +151,22 @@ namespace VegaAsis.Windows.Forms
         public static string ProxyPort { get; set; }
         public static string ProxyUser { get; set; }
         public static string ProxyPass { get; set; }
+        public static string VarsayilanTarayici { get; set; }
+        public static bool OtomatikGuncelleme { get; set; }
+        public static bool BenchmarkAktif { get; set; }
 
         public static void Save()
         {
             var dir = Path.GetDirectoryName(ConfigPath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            File.WriteAllText(ConfigPath, string.Format("ProxyAktif={0}\nProxyHost={1}\nProxyPort={2}\nProxyUser={3}\nProxyPass={4}",
-                ProxyAktif, ProxyHost ?? "", ProxyPort ?? "", ProxyUser ?? "", ProxyPass ?? ""));
+            File.WriteAllText(ConfigPath, string.Format("ProxyAktif={0}\nProxyHost={1}\nProxyPort={2}\nProxyUser={3}\nProxyPass={4}\nVarsayilanTarayici={5}\nOtomatikGuncelleme={6}\nBenchmarkAktif={7}",
+                ProxyAktif, ProxyHost ?? "", ProxyPort ?? "", ProxyUser ?? "", ProxyPass ?? "", VarsayilanTarayici ?? "Chrome", OtomatikGuncelleme, BenchmarkAktif));
         }
 
         public static void Load()
         {
+            OtomatikGuncelleme = true;
             if (!File.Exists(ConfigPath)) return;
             foreach (var line in File.ReadAllLines(ConfigPath))
             {
@@ -166,6 +179,9 @@ namespace VegaAsis.Windows.Forms
                 else if (key == "ProxyPort") ProxyPort = val;
                 else if (key == "ProxyUser") ProxyUser = val;
                 else if (key == "ProxyPass") ProxyPass = val;
+                else if (key == "VarsayilanTarayici") VarsayilanTarayici = val;
+                else if (key == "OtomatikGuncelleme") OtomatikGuncelleme = val == "True" || val == "1";
+                else if (key == "BenchmarkAktif") BenchmarkAktif = val == "True" || val == "1";
             }
         }
     }

@@ -30,8 +30,10 @@
       <HintPath>$(NuGetPackageRoot)entityframework\6.4.4\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
@@ -67,6 +69,15 @@
     <Compile Include="Services\AppSettingsService.cs" />
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\CompanySettingsService.cs" />
+    <Compile Include="Services\DaskService.cs" />
+    <Compile Include="Services\KaskoService.cs" />
+    <Compile Include="Services\ImmService.cs" />
+    <Compile Include="Services\KonutService.cs" />
+    <Compile Include="Services\TssService.cs" />
+    <Compile Include="Services\TramerService.cs" />
+    <Compile Include="Services\UavtService.cs" />
+    <Compile Include="Services\SablonService.cs" />
+    <Compile Include="Services\WsSorguService.cs" />
     <Compile Include="Services\OfferService.cs" />
     <Compile Include="Services\PolicyService.cs" />
     <Compile Include="Services\QuotaSettingsService.cs" />

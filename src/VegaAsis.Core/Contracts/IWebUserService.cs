@@ -7,7 +7,7 @@ namespace VegaAsis.Core.Contracts
 {
     public interface IWebUserService
     {
-        Task<IReadOnlyList<WebUserDto>> GetAllAsync(Guid? userId = null);
+        Task<IReadOnlyList<WebUserDto>> GetAllAsync(Guid? userId = null, bool? unlicensedAgentOnly = null);
 
         Task<WebUserDto> CreateAsync(WebUserDto dto);
 

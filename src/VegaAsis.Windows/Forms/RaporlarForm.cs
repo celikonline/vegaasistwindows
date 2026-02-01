@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -10,10 +11,15 @@ namespace VegaAsis.Windows.Forms
         private static readonly string[] PoliceItems = { "Aktif Poliçeler", "Yenileme Bekleyenler", "İptal Edilen Poliçeler", "Vadesi Geçen Poliçeler" };
         private static readonly string[] FinansalItems = { "Prim Tahsilat Raporu", "Komisyon Raporu", "Alacak Raporu", "Borç Raporu" };
         private static readonly string[] AnalizItems = { "Branş Dağılımı", "Şirket Dağılımı", "Müşteri Analizi", "Trend Analizi" };
-        private static readonly string[] GrafikItems = { "İl Bazlı Grafik", "Şirket Bazlı Grafik", "Mesleklere Göre Teklif Grafiği", "Teklif Kullanım Tarzı Grafiği", "Teklif Marka Grafiği", "Teklif Otorizasyon Oranları", "Teklif Komisyon Kazancı", "Ürün Grafiği", "Doğum Tarihi Portföy", "Kesilen Poliçeler" };
+        public static readonly string[] GrafikItems = { "İl Bazlı Grafik", "Şirket Bazlı Grafik", "Mesleklere Göre Teklif Grafiği", "Teklif Kullanım Tarzı Grafiği", "Teklif Marka Grafiği", "Teklif Otorizasyon Oranları", "Teklif Komisyon Kazancı", "Ürün Grafiği", "Doğum Tarihi Portföy", "Kesilen Poliçeler" };
 
-        public RaporlarForm()
+        private readonly IOfferService _offerService;
+        private readonly IPolicyService _policyService;
+
+        public RaporlarForm(IOfferService offerService = null, IPolicyService policyService = null)
         {
+            _offerService = offerService;
+            _policyService = policyService;
             InitializeComponent();
         }
 
@@ -62,8 +68,21 @@ namespace VegaAsis.Windows.Forms
                 Location = new Point(12, 12)
             };
             panel.Controls.Add(titleLabel);
+            if (!string.IsNullOrEmpty(description))
+            {
+                var descLabel = new Label
+                {
+                    Text = description,
+                    Font = new Font("Segoe UI", 9F),
+                    ForeColor = Color.FromArgb(102, 102, 102),
+                    AutoSize = true,
+                    Location = new Point(12, 32),
+                    MaximumSize = new Size(panel.Size.Width - 24, 0)
+                };
+                panel.Controls.Add(descLabel);
+            }
 
-            int y = 40;
+            int y = string.IsNullOrEmpty(description) ? 40 : 52;
             foreach (var item in items)
             {
                 var link = new LinkLabel
@@ -94,7 +113,7 @@ namespace VegaAsis.Windows.Forms
             var isGrafik = Array.IndexOf(GrafikItems, raporAdi) >= 0;
             if (isGrafik)
             {
-                using (var f = new RaporGrafikForm(raporAdi))
+                using (var f = new RaporGrafikForm(raporAdi, _offerService, _policyService))
                 {
                     f.ShowDialog(this);
                 }

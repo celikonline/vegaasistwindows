@@ -58,6 +58,10 @@ namespace VegaAsis.Data.Entities
         public bool AcentemWebeGonderildi { get; set; }
         [Column("meslek")]
         public string Meslek { get; set; }
+        [Column("kullanim_tarzi")]
+        public string KullanimTarzi { get; set; }
+        [Column("arac_markasi")]
+        public string AracMarkasi { get; set; }
         [Column("arsiv_donemi")]
         public string ArsivDonemi { get; set; }
         [Column("created_at")]

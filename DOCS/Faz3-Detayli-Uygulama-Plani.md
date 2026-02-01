@@ -16,7 +16,7 @@ Faz 3’ün amacı: Raporlar ekranındaki (RaporlarForm) grafik raporlarını Op
 | Bileşen | Durum | Açıklama |
 |---------|--------|----------|
 | RaporlarForm | ✅ | Üretim, Poliçe, Finansal, Analiz, **Grafik Raporları** kartları; Grafik Raporları’ndaki her link → RaporGrafikForm(raporAdi) |
-| RaporGrafikForm | ✅ | Rapor adına göre Column/Pie ve örnek veri; Grafiği Kaydet (PNG), Yazdır (PrintDocument + PrintPreviewDialog) |
+| RaporGrafikForm | ✅ | Tarih filtresi (Başlangıç–Bitiş), Grafik tipi (Sütun/Pasta/Çubuk), eksen başlıkları; Grafiği Kaydet (PNG/JPEG), Yazdır |
 | Grafik tipleri | ✅ | İl Bazlı, Şirket Bazlı, Meslek, Kullanım Tarzı, Marka, Otorizasyon, Komisyon, Ürün, Doğum Tarihi Portföy, Kesilen Poliçeler |
 
 ---

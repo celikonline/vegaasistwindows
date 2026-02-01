@@ -91,5 +91,15 @@ namespace VegaAsis.Windows.Forms
             if (workEx != null)
                 throw workEx;
         }
+
+        /// <summary>
+        /// Modal bekleme penceresi gösterir. Kapatmak için dönen formu Close() ile kapatın.
+        /// </summary>
+        public static LoadingForm ShowModal(Form owner, string mesaj = "Yükleniyor...")
+        {
+            var f = new LoadingForm(mesaj);
+            f.Show(owner);
+            return f;
+        }
     }
 }

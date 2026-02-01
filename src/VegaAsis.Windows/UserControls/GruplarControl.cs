@@ -16,6 +16,7 @@ namespace VegaAsis.Windows.UserControls
         private readonly IUserManagementService _userManagementService;
         private readonly IAuthService _authService;
         private SplitContainer _splitContainer;
+        private bool _splitterInitialized;
         private Label _lblGruplar;
         private ListBox _lstGruplar;
         private Button _btnGrupEkle;
@@ -75,11 +76,12 @@ namespace VegaAsis.Windows.UserControls
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
-                SplitterDistance = 200,
-                Panel1MinSize = 150,
-                Panel2MinSize = 300,
+                Panel1MinSize = 0,
+                Panel2MinSize = 0,
+                SplitterDistance = 0,
                 BackColor = SystemColors.Control
             };
+            _splitContainer.Resize += SplitContainer_Resize;
 
             // Panel1 (Sol - Gruplar)
             _splitContainer.Panel1.SuspendLayout();
@@ -189,6 +191,20 @@ namespace VegaAsis.Windows.UserControls
 
             // Grup seçildiğinde üyeleri yükle
             _lstGruplar.SelectedIndexChanged += LstGruplar_SelectedIndexChanged;
+        }
+
+        private void SplitContainer_Resize(object sender, EventArgs e)
+        {
+            if (_splitterInitialized) return;
+            const int panel1Min = 150;
+            const int panel2Min = 300;
+            int w = _splitContainer.Width;
+            if (w < panel1Min + panel2Min) return;
+            _splitterInitialized = true;
+            _splitContainer.Resize -= SplitContainer_Resize;
+            _splitContainer.Panel1MinSize = panel1Min;
+            _splitContainer.Panel2MinSize = panel2Min;
+            _splitContainer.SplitterDistance = Math.Max(panel1Min, Math.Min(200, w - panel2Min));
         }
 
         private async void LstGruplar_SelectedIndexChanged(object sender, EventArgs e)
