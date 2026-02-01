@@ -189,6 +189,25 @@ namespace VegaAsis.Windows.UserControls
             if (DateTime.TryParse(GetText("TrafikBitisTarihi"), out dt))
                 _sorguSession.TrafikBitisTarihi = dt;
             _sorguSession.KisaVadeliPolice = GetCheckBoxValue("KisaVadeli");
+
+            _sorguSession.SeciliSirketler.Clear();
+            if (_companyGrid != null)
+            {
+                foreach (DataGridViewRow row in _companyGrid.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    var cell = row.Cells["Secim"];
+                    if (cell?.Value is bool && (bool)cell.Value)
+                    {
+                        var name = row.Cells["Sirket"]?.Value?.ToString();
+                        var tag = row.Tag as RowTag;
+                        if (tag?.Company != null && tag.SubPrice == null)
+                            name = tag.Company.Name;
+                        if (!string.IsNullOrWhiteSpace(name) && !_sorguSession.SeciliSirketler.Contains(name))
+                            _sorguSession.SeciliSirketler.Add(name.Trim());
+                    }
+                }
+            }
         }
 
         private void LoadFromSession()
@@ -740,13 +759,8 @@ namespace VegaAsis.Windows.UserControls
             _cmbPolicyType.SelectedIndex = 0;
             _cmbPolicyType.SelectedIndexChanged += (s, e) =>
             {
-                var val = _cmbPolicyType.SelectedItem as string;
-                if (!string.IsNullOrEmpty(val))
-                {
-                    if (BranchFormRequested != null) BranchFormRequested.Invoke(this, val);
-                    _companyGrid?.Invalidate();
-                    RefreshSelectedCompanyPanel();
-                }
+                _companyGrid?.Invalidate();
+                RefreshSelectedCompanyPanel();
             };
             var chkDigerFiyat = new CheckBox { Text = "Diğer Fiyatları Göster", AutoSize = true, Margin = new Padding(0, 10, 12, 0) };
             var chkAltFiyat = new CheckBox { Text = "Alt Fiyatları Göster", AutoSize = true, Margin = new Padding(0, 10, 12, 0) };
@@ -849,9 +863,9 @@ namespace VegaAsis.Windows.UserControls
             AddFormRow(tabTrafik, "Poliçe No", "", ref ty2, fieldKey: "TrafikPoliceNo");
             AddFormRow(tabTrafik, "Başlangıç T.", "", ref ty2, fieldKey: "TrafikBaslangicTarihi");
             AddFormRow(tabTrafik, "Bitiş T.", "", ref ty2, fieldKey: "TrafikBitisTarihi");
+            AddFormRowKalanGunFromFields(tabTrafik, ref ty2, "TrafikBaslangicTarihi", "TrafikBitisTarihi", "TrafikKalanGun");
             AddFormRow(tabTrafik, "Kademe", "", ref ty2);
             AddFormRow(tabTrafik, "Hasarsızlık %", "", ref ty2);
-            AddFormRowWithKalanGun(tabTrafik, ref ty2);
             AddFormRow(tabTrafik, "Yenileme No", "", ref ty2);
             _aracBilgileriTabs.TabPages.Add(tabTrafik);
             var tabKasko = new TabPage("Kasko Pol. Bilgisi");
@@ -949,6 +963,43 @@ namespace VegaAsis.Windows.UserControls
             }
             parent.Controls.Add(cmb);
             if (!string.IsNullOrEmpty(fieldKey)) _formFields[fieldKey] = cmb;
+            y += 28;
+        }
+
+        private void AddFormRowKalanGunFromFields(Control parent, ref int y, string startKey, string endKey, string resultKey)
+        {
+            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(110, 20), Location = new Point(8, y), AutoEllipsis = true };
+            parent.Controls.Add(lblKalan);
+            var txtKalan = new TextBox { Left = 120, Top = y - 2, Width = 180, Text = "0", ReadOnly = true };
+            parent.Controls.Add(txtKalan);
+            if (!string.IsNullOrEmpty(resultKey)) _formFields[resultKey] = txtKalan;
+
+            EventHandler updateKalan = (s, e) =>
+            {
+                var txtStart = _formFields.ContainsKey(startKey) ? _formFields[startKey] as TextBox : null;
+                var txtEnd = _formFields.ContainsKey(endKey) ? _formFields[endKey] as TextBox : null;
+                if (txtStart == null || txtEnd == null || txtKalan == null) return;
+                DateTime baslangic, bitis;
+                if (DateTime.TryParse(txtStart.Text, out baslangic) && DateTime.TryParse(txtEnd.Text, out bitis))
+                {
+                    var kalan = (bitis - DateTime.Today).Days;
+                    txtKalan.Text = kalan >= 0 ? kalan.ToString() : "0";
+                }
+                else
+                    txtKalan.Text = "0";
+            };
+
+            if (_formFields.ContainsKey(startKey))
+            {
+                var txtStart = _formFields[startKey] as TextBox;
+                if (txtStart != null) txtStart.TextChanged += updateKalan;
+            }
+            if (_formFields.ContainsKey(endKey))
+            {
+                var txtEnd = _formFields[endKey] as TextBox;
+                if (txtEnd != null) txtEnd.TextChanged += updateKalan;
+            }
+            updateKalan(null, null);
             y += 28;
         }
 
