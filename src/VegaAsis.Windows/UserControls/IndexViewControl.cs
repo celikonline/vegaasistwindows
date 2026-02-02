@@ -7,13 +7,15 @@ using System.Windows.Forms;
 using VegaAsis.Windows.Data;
 using VegaAsis.Windows.Forms;
 using VegaAsis.Windows.Models;
+using VegaAsis.Windows.Resources;
 
 namespace VegaAsis.Windows.UserControls
 {
     public class IndexViewControl : UserControl
     {
+        private static readonly Color ThemeRed = Color.FromArgb(211, 47, 47);
+        private static readonly Color ThemeRedLight = Color.FromArgb(239, 83, 80);
         private static readonly Color VegaGreen = Color.FromArgb(46, 125, 50);
-        private static readonly Color VegaGreenLight = Color.FromArgb(102, 187, 106);
         private static readonly Color VegaRed = Color.FromArgb(198, 40, 40);
         private static readonly Color VegaOrange = Color.FromArgb(239, 108, 0);
 
@@ -23,7 +25,6 @@ namespace VegaAsis.Windows.UserControls
         private SplitContainer _mainSplit;
         private bool _splitterInitialized;
         private bool _allExpanded;
-        private Button _btnDigierFiyatlar;
         private ComboBox _cmbTarayici;
         private ComboBox _cmbPolicyType;
         private ComboBox _cmbIl;
@@ -53,7 +54,6 @@ namespace VegaAsis.Windows.UserControls
         public event EventHandler WebcamQRRequested;
         public event EventHandler SirketEkleRequested;
         public event EventHandler AdminPanelRequested;
-        public event EventHandler<string> BranchFormRequested;
         public event EventHandler TekliflerRequested;
         public event EventHandler PolicelerimRequested;
         public event EventHandler SirketlerRobotRequested;
@@ -103,7 +103,7 @@ namespace VegaAsis.Windows.UserControls
             {
                 var trafikStr = c.Price.HasValue ? c.Price.Value.ToString("N2", new CultureInfo("tr-TR")) : "0.00";
                 var yuzdeStr = c.Percentage.HasValue ? "%" + c.Percentage.Value : "%0";
-                var idx = _companyGrid.Rows.Add(false, c.Name, trafikStr, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", yuzdeStr, c.Warning ?? "");
+                var idx = _companyGrid.Rows.Add(false, false, null, c.Name, trafikStr, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", yuzdeStr, null, null, null, null, yuzdeStr);
                 var row = _companyGrid.Rows[idx];
                 row.Cells["Secim"].Value = c.Price.HasValue;
                 row.Tag = new RowTag { Company = c, SubPrice = null };
@@ -113,7 +113,7 @@ namespace VegaAsis.Windows.UserControls
                     foreach (var sp in c.SubPrices)
                     {
                         var spTrafik = sp.Price.ToString("N2", new CultureInfo("tr-TR"));
-                        var subIdx = _companyGrid.Rows.Add(false, "  \u2192 " + (sp.Branch ?? sp.Product), spTrafik, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "", sp.Description ?? "");
+                        var subIdx = _companyGrid.Rows.Add(false, false, null, "  \u2192 " + (sp.Branch ?? sp.Product), spTrafik, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "", null, null, null, null, "");
                         var subRow = _companyGrid.Rows[subIdx];
                         subRow.Tag = new RowTag { Company = c, SubPrice = sp };
                         subRow.DefaultCellStyle.BackColor = Color.FromArgb(252, 252, 252);
@@ -374,6 +374,84 @@ namespace VegaAsis.Windows.UserControls
             }
         }
 
+        private void CompanyGrid_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            var row = _companyGrid.Rows[e.RowIndex];
+            if (!row.Selected) return;
+            var rect = row.HeaderCell.ContentBounds;
+            if (rect.Width <= 0 || rect.Height <= 0) return;
+            e.Graphics.FillRectangle(new SolidBrush(_companyGrid.RowHeadersDefaultCellStyle.BackColor), rect);
+            using (var f = new Font("Segoe UI", 9F))
+            {
+                var arrow = "\u25B6";
+                var sz = e.Graphics.MeasureString(arrow, f);
+                e.Graphics.DrawString(arrow, f, Brushes.Black, rect.Left + (rect.Width - sz.Width) / 2f, rect.Top + (rect.Height - sz.Height) / 2f);
+            }
+            e.Handled = true;
+        }
+
+        private void CompanyGrid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            var row = _companyGrid.Rows[e.RowIndex];
+            var tag = row.Tag as RowTag;
+            var colName = _companyGrid.Columns[e.ColumnIndex].Name;
+
+            if (colName == "Logo" && tag != null && tag.SubPrice == null)
+            {
+                e.Handled = true;
+                e.Graphics.FillRectangle(new SolidBrush(e.CellStyle.BackColor), e.CellBounds);
+                var company = tag.Company;
+                if (company != null)
+                {
+                    int size = 18;
+                    int cx = e.CellBounds.Left + (e.CellBounds.Width - size) / 2;
+                    int cy = e.CellBounds.Top + (e.CellBounds.Height - size) / 2;
+                    
+                    var logo = CompanyLogoData.CreateLogo(company.Name, size);
+                    e.Graphics.DrawImage(logo, cx, cy, size, size);
+                    logo.Dispose();
+                }
+                return;
+            }
+
+            if ((colName == "Icon1" || colName == "Icon2" || colName == "Icon3" || colName == "Icon4") && tag != null && tag.SubPrice == null)
+            {
+                e.Handled = true;
+                e.Graphics.FillRectangle(new SolidBrush(e.CellStyle.BackColor), e.CellBounds);
+                var company = tag.Company;
+                if (company == null) return;
+                var rect = e.CellBounds;
+                int iconY = rect.Top + (rect.Height - 14) / 2;
+                Color clr = Color.Gray;
+                if (company.Status == "green") clr = Color.FromArgb(76, 175, 80);
+                else if (company.Status == "red") clr = Color.FromArgb(244, 67, 54);
+                string sym = null;
+                if (colName == "Icon1") sym = "\u263A";
+                else if (colName == "Icon2") { sym = "\u2699"; if (company.Status == "green") clr = Color.FromArgb(33, 150, 243); }
+                else if (colName == "Icon3") sym = "\u270E";
+                else if (colName == "Icon4") { sym = "\u20BA"; clr = company.Status == "green" ? Color.FromArgb(255, 193, 7) : Color.Gray; }
+                if (sym != null)
+                {
+                    using (var f = new Font("Segoe UI Symbol", 10F))
+                    using (var b = new SolidBrush(clr))
+                        e.Graphics.DrawString(sym, f, b, rect.Left + 4, iconY);
+                }
+            }
+        }
+
+        private void CompanyGrid_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            var colName = _companyGrid.Columns[e.ColumnIndex].Name;
+            if (colName != "Icon2") return;
+            var row = _companyGrid.Rows[e.RowIndex];
+            var tag = row.Tag as RowTag;
+            if (tag == null || tag.SubPrice != null) return;
+            AdminPanelRequested?.Invoke(this, EventArgs.Empty);
+        }
+
         public void AddCompany(string companyName)
         {
             if (string.IsNullOrWhiteSpace(companyName)) return;
@@ -383,7 +461,7 @@ namespace VegaAsis.Windows.UserControls
 
             var newCompany = new CompanyRow { Name = name, Status = "none", Percentage = 0 };
             _companyData.Add(newCompany);
-            var idx = _companyGrid.Rows.Add(false, name, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "%0", "");
+            var idx = _companyGrid.Rows.Add(false, false, null, name, "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "0.00", "%0", null, null, null, null, "%0");
             var row = _companyGrid.Rows[idx];
             row.Tag = new RowTag { Company = newCompany, SubPrice = null };
         }
@@ -415,7 +493,7 @@ namespace VegaAsis.Windows.UserControls
             if (company.Price.HasValue)
             {
                 var priceStr = company.Price.Value.ToString("N2", new CultureInfo("tr-TR")) + " ₺";
-                var lblPrice = new Label { Text = "Trafik: " + priceStr, Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = VegaGreen, AutoSize = true, Location = new Point(8, py) };
+                var lblPrice = new Label { Text = "Trafik: " + priceStr, Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = ThemeRed, AutoSize = true, Location = new Point(8, py) };
                 _selectedCompanyPanel.Controls.Add(lblPrice);
                 py += 24;
             }
@@ -492,129 +570,128 @@ namespace VegaAsis.Windows.UserControls
             var topHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 88,
+                Height = 72,
                 MinimumSize = new Size(0, 52),
-                BackColor = Color.White,
+                BackColor = Color.FromArgb(245, 245, 245),
                 Padding = new Padding(8, 4, 8, 4)
-            };
-
-            var lblTitle = new Label
-            {
-                Text = "Vega Hızlı Teklif Sistemi",
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                ForeColor = VegaGreen,
-                AutoSize = true,
-                Location = new Point(12, 8)
-            };
-            var lblAcente = new Label
-            {
-                Text = "Ana Acente: SAFAOĞULLARI SİGORTA - 95666",
-                Font = new Font("Segoe UI", 9F),
-                ForeColor = Color.Gray,
-                AutoSize = true,
-                Location = new Point(12, 30)
             };
 
             var navFlow = new FlowLayoutPanel
             {
                 AutoSize = true,
                 FlowDirection = FlowDirection.LeftToRight,
-                Location = new Point(320, 6),
+                Location = new Point(12, 4),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left,
                 WrapContents = true,
-                MaximumSize = new Size(0, 80),
+                MaximumSize = new Size(0, 64),
                 Padding = new Padding(0)
             };
-            string[] navItems = { "ANA EKRAN", "ŞİRKETLER (ROBOT)", "TEKLİFLER", "POLİÇELERİM", "Raporlar", "Destek Talepleri", "Ajanda / Yenileme", "Duyurular" };
-            foreach (var text in navItems)
+            var navDefs = new[] {
+                ("ANA EKRAN", Icons.Bilgiler, (EventHandler)null),
+                ("ŞİRKETLER (ROBOT)", Icons.Robot, (EventHandler)((s, e) => SirketlerRobotRequested?.Invoke(this, EventArgs.Empty))),
+                ("TEKLİFLER", Icons.Teklifler, (EventHandler)((s, e) => TekliflerRequested?.Invoke(this, EventArgs.Empty))),
+                ("POLİÇELERİM", Icons.Policeler, (EventHandler)((s, e) => PolicelerimRequested?.Invoke(this, EventArgs.Empty))),
+                ("Raporlar", Icons.Raporlar, (EventHandler)((s, e) => RaporlarRequested?.Invoke(this, EventArgs.Empty))),
+                ("Destek Taleplerim", Icons.Destek, (EventHandler)((s, e) => DestekTalepleriRequested?.Invoke(this, EventArgs.Empty))),
+                ("Ajanda / Yenileme", Icons.Ajanda, (EventHandler)((s, e) => AjandaYenilemeRequested?.Invoke(this, EventArgs.Empty))),
+                ("Duyurular", Icons.Bilgiler, (EventHandler)((s, e) => DuyurularRequested?.Invoke(this, EventArgs.Empty)))
+            };
+            for (int i = 0; i < navDefs.Length; i++)
             {
-                var btn = CreateNavButton(text, text == "ANA EKRAN");
-                if (text == "TEKLİFLER") btn.Click += (s, e) => TekliflerRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "POLİÇELERİM") btn.Click += (s, e) => PolicelerimRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "ŞİRKETLER (ROBOT)") btn.Click += (s, e) => SirketlerRobotRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "Raporlar") btn.Click += (s, e) => RaporlarRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "Destek Talepleri") btn.Click += (s, e) => DestekTalepleriRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "Ajanda / Yenileme") btn.Click += (s, e) => AjandaYenilemeRequested?.Invoke(this, EventArgs.Empty);
-                else if (text == "Duyurular") btn.Click += (s, e) => DuyurularRequested?.Invoke(this, EventArgs.Empty);
+                var (text, icon, handler) = navDefs[i];
+                var btn = CreateNavButton(text, i == 0, icon);
+                if (handler != null) btn.Click += handler;
                 navFlow.Controls.Add(btn);
             }
 
-            var rightPanel = new Panel { Dock = DockStyle.Right, Width = 340, Padding = new Padding(8), MinimumSize = new Size(260, 0) };
-            var rightTable = new TableLayoutPanel
+            var lblLive = new Label
             {
-                Dock = DockStyle.Right,
-                ColumnCount = 1,
-                RowCount = 2,
-                AutoSize = true,
-                Padding = new Padding(0)
-            };
-            rightTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
-            rightTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            rightTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            var btnGiris = new Button
-            {
-                Text = "→ Giriş Yap",
-                BackColor = VegaGreen,
+                Text = "[LIVE]",
+                BackColor = VegaRed,
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(100, 32),
-                Cursor = Cursors.Hand,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                AutoSize = false,
+                Size = new Size(52, 28),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Margin = new Padding(6, 0, 0, 0),
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold)
             };
-            btnGiris.FlatAppearance.BorderSize = 0;
-            var rightRow2 = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.RightToLeft,
-                AutoSize = true,
-                Margin = new Padding(0, 6, 0, 0),
-                Padding = new Padding(0)
-            };
-            var btnCanliDestek = new Button
-            {
-                Text = "CANLI DESTEK",
-                BackColor = VegaOrange,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(110, 32),
-                Cursor = Cursors.Hand
-            };
-            btnCanliDestek.FlatAppearance.BorderSize = 0;
             var btnCanliUretim = new Button
             {
                 Text = "CANLI ÜRETİM",
                 BackColor = VegaRed,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(110, 32),
-                Cursor = Cursors.Hand
+                Size = new Size(100, 28),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(2, 0, 6, 0),
+                Font = new Font("Segoe UI", 8.5F)
             };
             btnCanliUretim.FlatAppearance.BorderSize = 0;
-            btnCanliDestek.Click += (s, e) => CanliDestekRequested?.Invoke(this, EventArgs.Empty);
             btnCanliUretim.Click += (s, e) => CanliUretimRequested?.Invoke(this, EventArgs.Empty);
-            rightRow2.Controls.Add(btnCanliUretim);
-            rightRow2.Controls.Add(btnCanliDestek);
-            rightTable.Controls.Add(btnGiris, 0, 0);
-            rightTable.Controls.Add(rightRow2, 0, 1);
-            rightPanel.Controls.Add(rightTable);
-            topHeader.Controls.Add(lblTitle);
-            topHeader.Controls.Add(lblAcente);
+            var btnCanliDestek = new Button
+            {
+                Text = "CANLI DESTEK > Sorunu Sor",
+                BackColor = VegaOrange,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(160, 28),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 0, 0),
+                Font = new Font("Segoe UI", 8.5F)
+            };
+            btnCanliDestek.FlatAppearance.BorderSize = 0;
+            btnCanliDestek.Click += (s, e) => CanliDestekRequested?.Invoke(this, EventArgs.Empty);
+
+            var rightPanel = new Panel { Dock = DockStyle.Right, Width = 280, Padding = new Padding(6, 4, 8, 4), MinimumSize = new Size(260, 0) };
+            var rightFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                Padding = new Padding(0),
+                WrapContents = false
+            };
+            rightFlow.Controls.Add(btnCanliDestek);
+            rightFlow.Controls.Add(btnCanliUretim);
+            rightFlow.Controls.Add(lblLive);
+            rightPanel.Controls.Add(rightFlow);
             topHeader.Controls.Add(navFlow);
             topHeader.Controls.Add(rightPanel);
             Controls.Add(topHeader);
         }
 
-        private Button CreateNavButton(string text, bool active)
+        private Button CreateNavButton(string text, bool active, Image icon = null)
         {
+            int width = 90;
+            if (text.Length > 15) width = 145;
+            else if (text.Length > 10) width = 120;
+            else if (text.Length > 6) width = 100;
+            
             var btn = new Button
             {
                 Text = text,
-                BackColor = active ? VegaGreen : VegaGreenLight,
-                ForeColor = Color.White,
+                BackColor = active ? ThemeRed : Color.FromArgb(240, 240, 240),
+                ForeColor = active ? Color.White : Color.Black,
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(text.Length > 12 ? 130 : 110, 36),
+                Size = new Size(width, 28),
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 8, 0)
+                Margin = new Padding(0, 0, 2, 0),
+                Font = new Font("Segoe UI", 10F),
+                TextAlign = ContentAlignment.MiddleCenter,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                Padding = new Padding(0, 0, 0, 0)
             };
+            if (icon != null)
+            {
+                var resized = new Bitmap(16, 16);
+                using (var g = Graphics.FromImage(resized))
+                {
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(icon, 0, 0, 16, 16);
+                }
+                btn.Image = resized;
+            }
             btn.FlatAppearance.BorderSize = 0;
             return btn;
         }
@@ -632,31 +709,57 @@ namespace VegaAsis.Windows.UserControls
                 WrapContents = true,
                 AutoSize = true
             };
-            var chkWebServis = new CheckBox { Text = "Web Servis Teklifi Çalış", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
-            var chkKasko = new CheckBox { Text = "Kasko Özel Fiyat", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
-            var chkKisaVadeli = new CheckBox { Text = "Kısa Vadeli Poliçe Çalış", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
-            _formFields["KisaVadeli"] = chkKisaVadeli;
-            _cmbTarayici = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Margin = new Padding(0, 6, 12, 0) };
-            _cmbTarayici.Items.Add("Tarayıcı 1");
-            _cmbTarayici.Items.Add("Tarayıcı 2");
-            _cmbTarayici.SelectedIndex = 0;
-
-            _btnDigierFiyatlar = new Button
+            var chkDigerFiyat = new CheckBox { Text = "Diğer Fiyatları Göster", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
+            chkDigerFiyat.CheckedChanged += (s, e) =>
             {
-                Text = "Diğer Fiyatları Göster",
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(150, 26),
-                Margin = new Padding(0, 6, 8, 0),
-                Cursor = Cursors.Hand
-            };
-            _btnDigierFiyatlar.Click += (s, e) =>
-            {
-                _allExpanded = !_allExpanded;
-                _btnDigierFiyatlar.Text = _allExpanded ? "Diğer Fiyatları Gizle" : "Diğer Fiyatları Göster";
+                _allExpanded = chkDigerFiyat.Checked;
                 RefreshCompanyGrid();
                 RefreshSelectedCompanyPanel();
             };
-
+            var linkAltFiyat = new LinkLabel
+            {
+                Text = "Alt Fiyatları Göster",
+                AutoSize = true,
+                LinkColor = Color.Blue,
+                Margin = new Padding(0, 10, 16, 0),
+                Cursor = Cursors.Hand
+            };
+            linkAltFiyat.Click += (s, e) => { };
+            var chkWebServis = new CheckBox { Text = "Web Servis Teklifi Çalış", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
+            var chkKasko = new CheckBox { Text = "Kasko Özel Fiyat", AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
+            var btnPdfAktar = new Button
+            {
+                Text = "PDF Aktar",
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(90, 26),
+                Margin = new Padding(0, 6, 8, 0),
+                Cursor = Cursors.Hand
+            };
+            btnPdfAktar.Click += (s, e) => PdfExportRequested?.Invoke(this, EventArgs.Empty);
+            var btnRedMinus = new Button
+            {
+                Text = "-",
+                BackColor = VegaRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(28, 26),
+                Margin = new Padding(0, 6, 4, 0),
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 12F)
+            };
+            btnRedMinus.FlatAppearance.BorderSize = 0;
+            var btnRedPlus = new Button
+            {
+                Text = "+",
+                BackColor = VegaRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(28, 26),
+                Margin = new Padding(0, 6, 4, 0),
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 12F)
+            };
+            btnRedPlus.FlatAppearance.BorderSize = 0;
             var btnSirketEkle = new Button
             {
                 Text = "+",
@@ -664,23 +767,21 @@ namespace VegaAsis.Windows.UserControls
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Size = new Size(28, 26),
-                Margin = new Padding(0, 6, 4, 0),
-                Cursor = Cursors.Hand
+                Margin = new Padding(0, 6, 0, 0),
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 12F)
             };
             btnSirketEkle.FlatAppearance.BorderSize = 0;
             btnSirketEkle.Click += (s, e) => SirketEkleRequested?.Invoke(this, EventArgs.Empty);
 
-            var btnAyarlar = new Button
-            {
-                Text = "⚙",
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(28, 26),
-                Margin = new Padding(0, 6, 0, 0),
-                Cursor = Cursors.Hand
-            };
-            btnAyarlar.Click += (s, e) => AdminPanelRequested?.Invoke(this, EventArgs.Empty);
-
-            toolbar.Controls.AddRange(new Control[] { chkWebServis, chkKasko, chkKisaVadeli, _cmbTarayici, _btnDigierFiyatlar, btnSirketEkle, btnAyarlar });
+            toolbar.Controls.Add(chkDigerFiyat);
+            toolbar.Controls.Add(linkAltFiyat);
+            toolbar.Controls.Add(chkWebServis);
+            toolbar.Controls.Add(chkKasko);
+            toolbar.Controls.Add(btnPdfAktar);
+            toolbar.Controls.Add(btnRedMinus);
+            toolbar.Controls.Add(btnRedPlus);
+            toolbar.Controls.Add(btnSirketEkle);
             Controls.Add(toolbar);
         }
 
@@ -696,22 +797,15 @@ namespace VegaAsis.Windows.UserControls
             _mainSplit.Resize += MainSplit_Resize;
 
             _mainSplit.Panel1.SuspendLayout();
-            var leftToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(245, 245, 245) };
-            var btnTrafik = new Button
+            var teklifIdPanel = new Panel { Dock = DockStyle.Top, Height = 20, BackColor = Color.White, Padding = new Padding(8, 2, 8, 0) };
+            var lblTeklifId = new Label
             {
-                Text = "TRAFİK",
-                BackColor = VegaGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(80, 28),
-                Location = new Point(8, 4)
+                Text = "Teklif ID : 0",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(8, 2)
             };
-            btnTrafik.FlatAppearance.BorderSize = 0;
-            var cmbTip = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 100, Location = new Point(96, 6) };
-            cmbTip.Items.Add("Tümü");
-            cmbTip.SelectedIndex = 0;
-            leftToolbar.Controls.Add(btnTrafik);
-            leftToolbar.Controls.Add(cmbTip);
+            teklifIdPanel.Controls.Add(lblTeklifId);
 
             _companyGrid = new DataGridView
             {
@@ -720,49 +814,69 @@ namespace VegaAsis.Windows.UserControls
                 ReadOnly = true,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                RowHeadersVisible = false,
+                RowHeadersVisible = true,
+                RowHeadersWidth = 24,
+                ColumnHeadersVisible = true,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
                 BackgroundColor = Color.White,
                 BorderStyle = BorderStyle.None,
-                ColumnHeadersHeight = 34,
+                ColumnHeadersHeight = 26,
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
                     Alignment = DataGridViewContentAlignment.MiddleLeft,
-                    Padding = new Padding(6, 4, 6, 4),
-                    SelectionBackColor = Color.FromArgb(230, 245, 230)
+                    Padding = new Padding(4, 2, 4, 2),
+                    SelectionBackColor = Color.White,
+                    SelectionForeColor = Color.Black
                 },
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    Alignment = DataGridViewContentAlignment.MiddleLeft,
-                    Padding = new Padding(6, 6, 6, 6)
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    Padding = new Padding(4, 2, 4, 2),
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    BackColor = Color.FromArgb(240, 240, 240),
+                    ForeColor = Color.Black
                 }
             };
-            _companyGrid.RowTemplate.Height = 32;
+            _companyGrid.RowTemplate.Height = 25;
             _companyGrid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+            _companyGrid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             _companyGrid.Columns.Add(new DataGridViewCheckBoxColumn { Name = "Secim", HeaderText = "", Width = 32 });
-            _companyGrid.Columns.Add("Sirket", "Şirket");
+            _companyGrid.Columns.Add(new DataGridViewCheckBoxColumn { Name = "Secim2", HeaderText = "", Width = 32 });
+            _companyGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Logo", HeaderText = "", Width = 40, ReadOnly = true });
+            var colSirket = new DataGridViewTextBoxColumn { Name = "Sirket", HeaderText = "Şirket", MinimumWidth = 100 };
+            _companyGrid.Columns.Add(colSirket);
             _companyGrid.Columns.Add("Trafik", "Trafik");
             _companyGrid.Columns.Add("Sbm", "Sbm");
             _companyGrid.Columns.Add("Kasko", "Kasko");
-            _companyGrid.Columns.Add("TssAy", "TSS Ay.");
+            _companyGrid.Columns.Add("TssAy", "TSS Ayak.");
             _companyGrid.Columns.Add("TssYat", "TSS Yat.");
             _companyGrid.Columns.Add("Konut", "Konut");
             _companyGrid.Columns.Add("Dask", "Dask");
-            _companyGrid.Columns.Add("Imm", "IMM");
+            _companyGrid.Columns.Add("Imm", "İMM");
             _companyGrid.Columns.Add("Yuzde", "%");
-            var colUyari = new DataGridViewTextBoxColumn { Name = "Uyari", HeaderText = "Uyarı", MinimumWidth = 220 };
+            _companyGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Icon1", HeaderText = "", Width = 28, ReadOnly = true });
+            _companyGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Icon2", HeaderText = "", Width = 28, ReadOnly = true });
+            _companyGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Icon3", HeaderText = "", Width = 28, ReadOnly = true });
+            _companyGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Icon4", HeaderText = "", Width = 28, ReadOnly = true });
+            var colUyari = new DataGridViewTextBoxColumn { Name = "Uyari", HeaderText = "Uyarı", MinimumWidth = 80 };
             _companyGrid.Columns.Add(colUyari);
-            _companyGrid.Columns["Sirket"].FillWeight = 120;
-            _companyGrid.Columns["Uyari"].FillWeight = 180;
+            _companyGrid.Columns["Sirket"].FillWeight = 100;
+            _companyGrid.Columns["Uyari"].FillWeight = 80;
             if (_companyGrid.Columns["Secim"] != null)
                 _companyGrid.Columns["Secim"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            if (_companyGrid.Columns["Secim2"] != null)
+                _companyGrid.Columns["Secim2"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _companyGrid.RowPrePaint += CompanyGrid_RowPrePaint;
             _companyGrid.EnableHeadersVisualStyles = false;
             _companyGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240);
             _companyGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = _companyGrid.ColumnHeadersDefaultCellStyle.BackColor;
             _companyGrid.CellFormatting += CompanyGrid_CellFormatting;
+            _companyGrid.CellPainting += CompanyGrid_CellPainting;
             _companyGrid.CellDoubleClick += CompanyGrid_CellDoubleClick;
+            _companyGrid.CellClick += CompanyGrid_CellClick;
 
             _mainSplit.Panel1.Controls.Add(_companyGrid);
-            _mainSplit.Panel1.Controls.Add(leftToolbar);
+            _mainSplit.Panel1.Controls.Add(teklifIdPanel);
             _mainSplit.Panel1.ResumeLayout(true);
 
             _mainSplit.Panel2.SuspendLayout();
@@ -791,9 +905,32 @@ namespace VegaAsis.Windows.UserControls
         {
             rightPanel.BackColor = Color.FromArgb(250, 250, 250);
 
-            var topBar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 44, BackColor = Color.White, Padding = new Padding(8), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
-            var lblTeklifId = new Label { Text = "Teklif ID: 37111587", AutoSize = true, Font = new Font("Segoe UI", 9F, FontStyle.Bold), Margin = new Padding(0, 10, 12, 0) };
-            _cmbPolicyType = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110, Height = 26, Margin = new Padding(0, 6, 8, 0) };
+            var headerPanel = new Panel { Dock = DockStyle.Top, Height = 100, BackColor = Color.White, Padding = new Padding(8) };
+            var sorguBaslatBar = new Panel { BackColor = ThemeRed, Size = new Size(280, 30), Location = new Point(4, 4) };
+            var lblSearchIcon = new Label { Text = "\u2315", Font = new Font("Segoe UI", 12F), ForeColor = Color.White, Location = new Point(6, 4), AutoSize = true };
+            var lblSorguBaslat = new Label
+            {
+                Text = "Sorguyu Başlat",
+                BackColor = ThemeRed,
+                ForeColor = Color.White,
+                AutoSize = true,
+                Location = new Point(24, 5),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+            };
+            sorguBaslatBar.Controls.Add(lblSearchIcon);
+            sorguBaslatBar.Controls.Add(lblSorguBaslat);
+            headerPanel.Controls.Add(sorguBaslatBar);
+            var lblTrafik = new Label { Text = "TRAFİK", AutoSize = true, Location = new Point(8, 42), Font = new Font("Segoe UI", 8F) };
+            _cmbPolicyType = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 140,
+                Height = 24,
+                Location = new Point(8, 62),
+                FlatStyle = FlatStyle.Standard,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 9F)
+            };
             _cmbPolicyType.Items.AddRange(new object[] { "TRAFİK", "KASKO", "DASK", "TSS", "KONUT", "İMM" });
             _cmbPolicyType.SelectedIndex = 0;
             _cmbPolicyType.SelectedIndexChanged += (s, e) =>
@@ -801,12 +938,24 @@ namespace VegaAsis.Windows.UserControls
                 _companyGrid?.Invalidate();
                 RefreshSelectedCompanyPanel();
             };
-            var chkDigerFiyat = new CheckBox { Text = "Diğer Fiyatları Göster", AutoSize = true, Margin = new Padding(0, 10, 12, 0) };
-            var chkAltFiyat = new CheckBox { Text = "Alt Fiyatları Göster", AutoSize = true, Margin = new Padding(0, 10, 12, 0) };
-            var btnPdf = new Button { Text = "PDF Aktar", FlatStyle = FlatStyle.Flat, Size = new Size(80, 26), Margin = new Padding(0, 6, 0, 0) };
-            btnPdf.Click += (s, e) => PdfExportRequested?.Invoke(this, EventArgs.Empty);
-            topBar.Controls.AddRange(new Control[] { lblTeklifId, _cmbPolicyType, chkDigerFiyat, chkAltFiyat, btnPdf });
-            rightPanel.Controls.Add(topBar);
+            var lblTarayici = new Label { Text = "Tarayıcı 1", AutoSize = true, Location = new Point(160, 42), Font = new Font("Segoe UI", 8F) };
+            _cmbTarayici = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 120,
+                Height = 24,
+                Location = new Point(156, 62),
+                BackColor = Color.FromArgb(255, 230, 230),
+                FlatStyle = FlatStyle.Standard,
+                Font = new Font("Segoe UI", 9F)
+            };
+            _cmbTarayici.Items.Add("Tarayıcı 1");
+            _cmbTarayici.Items.Add("Tarayıcı 2");
+            _cmbTarayici.SelectedIndex = 0;
+            headerPanel.Controls.Add(lblTrafik);
+            headerPanel.Controls.Add(_cmbPolicyType);
+            headerPanel.Controls.Add(lblTarayici);
+            headerPanel.Controls.Add(_cmbTarayici);
 
             var rightContent = new Panel { Dock = DockStyle.Fill };
             var scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(8) };
@@ -814,37 +963,27 @@ namespace VegaAsis.Windows.UserControls
             _rightActionPanel = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 120,
+                Width = 130,
                 BackColor = Color.FromArgb(245, 245, 245),
                 Padding = new Padding(4)
             };
             int ay = 8;
-            var btnSorguBaslat = new Button
-            {
-                Text = "Sorguyu Başlat",
-                BackColor = VegaGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(112, 40),
-                Location = new Point(4, ay),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 9F)
-            };
-            btnSorguBaslat.FlatAppearance.BorderSize = 0;
-            ay += 46;
-            _btnDuraklat = new Button { Text = "Duraklat / Devam Et", FlatStyle = FlatStyle.Flat, Size = new Size(112, 32), Location = new Point(4, ay), Font = new Font("Segoe UI", 8F), Enabled = false };
-            ay += 38;
-            var btnYeniSorgu = new Button { Text = "Yeni Sorgu Kaydet", FlatStyle = FlatStyle.Flat, Size = new Size(112, 36), Location = new Point(4, ay), Font = new Font("Segoe UI", 8F) };
-            ay += 42;
-            var btnSbm = new Button { Text = "SBM Sorgula", FlatStyle = FlatStyle.Flat, Size = new Size(112, 36), Location = new Point(4, ay), Font = new Font("Segoe UI", 8F) };
-            ay += 42;
-            var btnKuyruk = new Button { Text = "Kuyruk Sorgusu", FlatStyle = FlatStyle.Flat, Size = new Size(112, 36), Location = new Point(4, ay), Font = new Font("Segoe UI", 8F) };
-            btnSorguBaslat.Click += BtnSorguBaslat_Click;
-            _btnDuraklat.Click += BtnDuraklat_Click;
+            var btnYeniSorgu = CreateActionButton("Yeni Sorgu Kaydet", Icons.YeniSorgu, ref ay);
             btnYeniSorgu.Click += BtnYeniSorgu_Click;
-            btnSbm.Click += (s, e) => SbmSorgusuRequested?.Invoke(this, EventArgs.Empty);
+            var btnKuyruk = CreateActionButton("Kuyruklama Sorgu", Icons.KuyruklamaSorgu, ref ay);
             btnKuyruk.Click += (s, e) => KuyrukSorgusuRequested?.Invoke(this, EventArgs.Empty);
-            _rightActionPanel.Controls.AddRange(new Control[] { btnSorguBaslat, _btnDuraklat, btnYeniSorgu, btnSbm, btnKuyruk });
+            _btnDuraklat = CreateActionButton("Duraklat / Devam Et", Icons.Devam, ref ay);
+            _btnDuraklat.Click += BtnDuraklat_Click;
+            var btnRuhsatQr = CreateActionButton("Ruhsat QR", Icons.RuhsatQr, ref ay);
+            var btnSbm = CreateActionButton("Sbm Sorgu", Icons.Sbm, ref ay);
+            btnSbm.Click += (s, e) => SbmSorgusuRequested?.Invoke(this, EventArgs.Empty);
+            var btnWebcam = CreateActionButton("Webcam Oku", Icons.Manuel, ref ay);
+            btnWebcam.Click += (s, e) => WebcamQRRequested?.Invoke(this, EventArgs.Empty);
+            var btnPdfYukle = CreateActionButton("Pdf Yükle", Icons.PdfYukle, ref ay);
+            btnPdfYukle.Click += (s, e) => PdfUploadRequested?.Invoke(this, EventArgs.Empty);
+            var btnTarayiciBaslat = CreateActionButton("Tarayıcıları Başlat", Icons.Robot, ref ay);
+            var btnTemizle = CreateActionButton("Temizle", Icons.FormTemizleme, ref ay);
+            _rightActionPanel.Controls.AddRange(new Control[] { btnYeniSorgu, btnKuyruk, _btnDuraklat, btnRuhsatQr, btnSbm, btnWebcam, btnPdfYukle, btnTarayiciBaslat, btnTemizle });
             rightContent.Controls.Add(_rightActionPanel);
 
             int y = 8;
@@ -862,11 +1001,11 @@ namespace VegaAsis.Windows.UserControls
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold)
             };
             int fy = 24;
-            AddFormRow(grpMusteri, "Plaka", "06BFT02", ref fy, true, "Varsa", "Getir", fieldKey: "Plaka");
+            AddFormRow(grpMusteri, "Plaka", "06BFT02", ref fy, true, "Varsa Getir", "", fieldKey: "Plaka");
             AddFormRow(grpMusteri, "TC / Vergi", "13627046986", ref fy, fieldKey: "TcVergi");
             AddFormRow(grpMusteri, "Belge Seri", "GL", ref fy, secondText: "152109", fieldKey: "BelgeSeri", fieldKey2: "BelgeNo");
-            AddFormRow(grpMusteri, "Doğum T.", "01.01.1987", ref fy, fieldKey: "DogumTarihi");
-            AddFormRow(grpMusteri, "DT Şirketi", "", ref fy, isCombo: true);
+            AddFormRowDatePicker(grpMusteri, "Doğum T.", ref fy, "DogumTarihi");
+            AddFormRowDtSirketi(grpMusteri, "DT Şirketi", ref fy);
             AddFormRow(grpMusteri, "Müşteri", "SELİM TANRISEVEN", ref fy, fieldKey: "Musteri");
             AddFormRowWithItems(grpMusteri, "Meslek", ref fy, Professions.List, "Meslek");
             AddFormRow(grpMusteri, "Telefon", "", ref fy, checkText: "Kullan");
@@ -886,7 +1025,6 @@ namespace VegaAsis.Windows.UserControls
             var tabArac = new TabPage("Araç Bilgileri");
             int ty = 8;
             AddFormRowWithItems(tabArac, "Kullanım Tarzı", ref ty, KullanimTarziOptions.List, "KullanimTarzi");
-            AddFormRowWithItems(tabArac, "Kullanım Amacı", ref ty, new[] { "Seçiniz", "ÖZEL KULLANIM", "TİCARİ KULLANIM", "RESMİ KULLANIM" });
             AddFormRowMarkaTip(tabArac, ref ty, "Marka", "Tip");
             AddFormRow(tabArac, "Model Yılı", "2000", ref ty, fieldKey: "ModelYili");
             AddFormRow(tabArac, "Kasko Değeri", "", ref ty);
@@ -894,8 +1032,10 @@ namespace VegaAsis.Windows.UserControls
             AddFormRow(tabArac, "Koltuk Sayısı", "1", ref ty);
             AddFormRow(tabArac, "Motor No", "SE706025", ref ty);
             AddFormRow(tabArac, "Şasi No", "", ref ty);
-            var chkLpg = new CheckBox { Text = "LPG", AutoSize = true, Location = new Point(120, ty) };
+            var chkLpg = new CheckBox { Text = "LPG", AutoSize = true, Location = new Point(FormInputLeft, ty + 2) };
+            var txtLpg = new TextBox { Text = "0", Location = new Point(FormInputLeft + 50, ty), Width = 60 };
             tabArac.Controls.Add(chkLpg);
+            tabArac.Controls.Add(txtLpg);
             _aracBilgileriTabs.TabPages.Add(tabArac);
             var tabTrafik = new TabPage("Trafik Pol. Bilgisi");
             int ty2 = 8;
@@ -923,29 +1063,15 @@ namespace VegaAsis.Windows.UserControls
             _aracBilgileriTabs.TabPages.Add(tabKasko);
             scrollPanel.Controls.Add(_aracBilgileriTabs);
             y += 200;
-            const int SectionGap = 12;
-            y += SectionGap;
-
-            var bottomBtns = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                Location = new Point(8, y),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left,
-                Padding = new Padding(0),
-                Margin = new Padding(0, 0, 0, SectionGap)
-            };
-            var btnWebcam = new Button { Text = "Webcam QR Oku", FlatStyle = FlatStyle.Flat, Size = new Size(110, 28) };
-            btnWebcam.Click += (s, e) => WebcamQRRequested?.Invoke(this, EventArgs.Empty);
-            var btnPdfYukle = new Button { Text = "PDF Yükle", FlatStyle = FlatStyle.Flat, Size = new Size(80, 28) };
-            btnPdfYukle.Click += (s, e) => PdfUploadRequested?.Invoke(this, EventArgs.Empty);
-            bottomBtns.Controls.Add(btnWebcam);
-            bottomBtns.Controls.Add(btnPdfYukle);
-            bottomBtns.Controls.Add(new Button { Text = "Temizle", FlatStyle = FlatStyle.Flat, Size = new Size(70, 28) });
-            scrollPanel.Controls.Add(bottomBtns);
 
             rightContent.Controls.Add(scrollPanel);
-            rightPanel.Controls.Add(rightContent);
+            
+            // Dock order: add Fill first, then Top - WinForms docks in reverse order
+            rightPanel.SuspendLayout();
+            rightPanel.Controls.Clear();
+            rightPanel.Controls.Add(rightContent);  // Dock.Fill - will fill remaining space
+            rightPanel.Controls.Add(headerPanel);   // Dock.Top - will dock at top first
+            rightPanel.ResumeLayout(true);
         }
 
         private const int FormLabelWidth = 110;
@@ -957,14 +1083,23 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRow(Control parent, string labelText, string value, ref int y, bool withCheck = false, string checkText = "", string secondCheckText = "", string secondText = "", bool isCombo = false, bool secondCombo = false, bool multiLine = false, string fieldKey = null, string fieldKey2 = null)
         {
             int rowTop = y;
-            int inputTop = rowTop - 2;
-            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            const int labelVertOffset = 4;
+            int inputTop = rowTop + 3;
+            var lbl = new Label
+            {
+                Text = labelText + ":",
+                AutoSize = false,
+                Size = new Size(FormLabelWidth, 20),
+                Location = new Point(8, rowTop + labelVertOffset),
+                AutoEllipsis = true,
+                Font = new Font(parent.Font.FontFamily, 9F)
+            };
             parent.Controls.Add(lbl);
             Control input;
             int firstInputWidth = string.IsNullOrEmpty(secondText) ? 180 : 72;
             if (isCombo)
             {
-                input = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = inputTop, Width = 180 };
+                input = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = inputTop, Width = 180, Height = 22 };
                 ((ComboBox)input).Items.Add("Seçiniz");
                 ((ComboBox)input).SelectedIndex = 0;
             }
@@ -974,7 +1109,7 @@ namespace VegaAsis.Windows.UserControls
             }
             else
             {
-                input = new TextBox { Left = FormInputLeft, Top = inputTop, Width = firstInputWidth, Text = value };
+                input = new TextBox { Left = FormInputLeft, Top = inputTop, Width = firstInputWidth, Height = 22, Text = value };
             }
             parent.Controls.Add(input);
             if (!string.IsNullOrEmpty(fieldKey)) _formFields[fieldKey] = input;
@@ -982,22 +1117,41 @@ namespace VegaAsis.Windows.UserControls
             Control txt2 = null;
             if (withCheck)
             {
-                var chk1 = new CheckBox { Text = checkText, AutoSize = true, Location = new Point(nx, rowTop + 2) };
+                var chk1 = new CheckBox { Text = checkText, AutoSize = true, Location = new Point(nx, rowTop + labelVertOffset), Font = new Font(parent.Font.FontFamily, 9F) };
                 parent.Controls.Add(chk1);
                 nx += 60;
-                var chk2 = new CheckBox { Text = secondCheckText, AutoSize = true, Location = new Point(nx, rowTop + 2) };
+                var chk2 = new CheckBox { Text = secondCheckText, AutoSize = true, Location = new Point(nx, rowTop + labelVertOffset), Font = new Font(parent.Font.FontFamily, 9F) };
                 parent.Controls.Add(chk2);
             }
             if (!string.IsNullOrEmpty(secondText))
             {
-                int secondLeft = FormInputLeft + firstInputWidth + FormInputGap;
-                txt2 = new TextBox { Left = secondLeft, Top = inputTop, Width = 78, Text = secondText };
-                parent.Controls.Add(txt2);
+                parent.Controls.Remove(input);
+                int groupW = firstInputWidth + FormInputGap + 22 + 78;
+                var groupPanel = new Panel
+                {
+                    Location = new Point(FormInputLeft, rowTop + 2),
+                    Size = new Size(groupW, 24),
+                    BackColor = Color.White,
+                    BorderStyle = BorderStyle.FixedSingle
+                };
+                var firstInput = input as TextBox;
+                if (firstInput != null)
+                {
+                    firstInput.BorderStyle = BorderStyle.None;
+                    firstInput.Location = new Point(2, 2);
+                    firstInput.Size = new Size(firstInputWidth - 2, 20);
+                    groupPanel.Controls.Add(firstInput);
+                }
+                var lblNo = new Label { Text = "No:", AutoSize = true, Location = new Point(firstInputWidth + FormInputGap + 2, 4), Font = new Font(parent.Font.FontFamily, 8F), ForeColor = Color.Gray };
+                groupPanel.Controls.Add(lblNo);
+                txt2 = new TextBox { Left = firstInputWidth + FormInputGap + 22, Top = 2, Width = 76, Height = 20, Text = secondText, BorderStyle = BorderStyle.None };
+                groupPanel.Controls.Add(txt2);
+                parent.Controls.Add(groupPanel);
                 if (!string.IsNullOrEmpty(fieldKey2)) _formFields[fieldKey2] = txt2;
             }
             if (secondCombo)
             {
-                var cmb2 = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft + 184 + FormInputGap, Top = inputTop, Width = 100 };
+                var cmb2 = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft + 184 + FormInputGap, Top = inputTop, Width = 100, Height = 22 };
                 cmb2.Items.Add("Seçiniz");
                 cmb2.SelectedIndex = 0;
                 parent.Controls.Add(cmb2);
@@ -1008,9 +1162,9 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRowWithItems(Control parent, string labelText, ref int y, string[] items, string fieldKey = null)
         {
             int rowTop = y;
-            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lbl);
-            var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop - 2, Width = 180 };
+            var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22 };
             if (items != null && items.Length > 0)
             {
                 foreach (var item in items)
@@ -1027,9 +1181,9 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRowKalanGunFromFields(Control parent, ref int y, string startKey, string endKey, string resultKey)
         {
             int rowTop = y;
-            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblKalan);
-            var txtKalan = new TextBox { Left = FormInputLeft, Top = rowTop - 2, Width = 180, Text = "0", ReadOnly = true };
+            var txtKalan = new TextBox { Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22, Text = "0", ReadOnly = true };
             parent.Controls.Add(txtKalan);
             if (!string.IsNullOrEmpty(resultKey)) _formFields[resultKey] = txtKalan;
 
@@ -1065,25 +1219,25 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRowWithKalanGun(Control parent, ref int y)
         {
             int rowTop = y;
-            var lblBaslangic = new Label { Text = "Başlangıç T.:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblBaslangic = new Label { Text = "Başlangıç T.:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblBaslangic);
-            var txtBaslangic = new TextBox { Left = FormInputLeft, Top = rowTop - 2, Width = 180 };
+            var txtBaslangic = new TextBox { Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22 };
             txtBaslangic.TextChanged += (s, e) => HesaplaKalanGun(parent);
             parent.Controls.Add(txtBaslangic);
             y += FormRowHeight;
 
             rowTop = y;
-            var lblBitis = new Label { Text = "Bitiş T.:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblBitis = new Label { Text = "Bitiş T.:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblBitis);
-            var txtBitis = new TextBox { Left = FormInputLeft, Top = rowTop - 2, Width = 180 };
+            var txtBitis = new TextBox { Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22 };
             txtBitis.TextChanged += (s, e) => HesaplaKalanGun(parent);
             parent.Controls.Add(txtBitis);
             y += FormRowHeight;
 
             rowTop = y;
-            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblKalan = new Label { Text = "Kalan Gün:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblKalan);
-            var txtKalan = new TextBox { Left = FormInputLeft, Top = rowTop - 2, Width = 180, Text = "0", ReadOnly = true };
+            var txtKalan = new TextBox { Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22, Text = "0", ReadOnly = true };
             parent.Controls.Add(txtKalan);
             parent.Tag = new object[] { txtBaslangic, txtBitis, txtKalan };
             y += FormRowHeight;
@@ -1114,9 +1268,9 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRowMarkaTip(Control parent, ref int y, string fieldKeyMarka = null, string fieldKeyTip = null)
         {
             int rowTop = y;
-            var lblMarka = new Label { Text = "Marka:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblMarka = new Label { Text = "Marka:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblMarka);
-            var cmbMarka = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop - 2, Width = 180 };
+            var cmbMarka = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22 };
             cmbMarka.Items.AddRange(VehicleBrandsAndTypes.GetBrandDisplays());
             if (cmbMarka.Items.Count > 0) cmbMarka.SelectedIndex = 0;
             parent.Controls.Add(cmbMarka);
@@ -1124,9 +1278,9 @@ namespace VegaAsis.Windows.UserControls
             y += FormRowHeight;
 
             rowTop = y;
-            var lblTip = new Label { Text = "Tip:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lblTip = new Label { Text = "Tip:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lblTip);
-            var cmbTip = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop - 2, Width = 180 };
+            var cmbTip = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop + 3, Width = 180, Height = 22 };
             var brandDisplays = VehicleBrandsAndTypes.GetBrandDisplays();
             if (brandDisplays.Length > 0)
             {
@@ -1152,9 +1306,9 @@ namespace VegaAsis.Windows.UserControls
         private void AddFormRowIlIlce(Control parent, ref int y)
         {
             int rowTop = y;
-            var lbl = new Label { Text = "İl / İlçe:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 2), AutoEllipsis = true };
+            var lbl = new Label { Text = "İl / İlçe:", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
             parent.Controls.Add(lbl);
-            _cmbIl = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop - 2, Width = 120 };
+            _cmbIl = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop + 3, Width = 120, Height = 22 };
             _cmbIl.Items.AddRange(TurkeyLocations.GetCityNames());
             if (_cmbIl.Items.Count > 0) _cmbIl.SelectedIndex = 0;
             _cmbIl.SelectedIndexChanged += (s, e) =>
@@ -1167,7 +1321,7 @@ namespace VegaAsis.Windows.UserControls
                 if (_cmbIlce.Items.Count > 0) _cmbIlce.SelectedIndex = 0;
             };
             parent.Controls.Add(_cmbIl);
-            _cmbIlce = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft + 120 + FormInputGap, Top = rowTop - 2, Width = 100 };
+            _cmbIlce = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft + 120 + FormInputGap, Top = rowTop + 3, Width = 100, Height = 22 };
             if (_cmbIl.SelectedItem != null)
             {
                 var districts = TurkeyLocations.GetDistrictsByCity(_cmbIl.SelectedItem.ToString());
@@ -1178,9 +1332,87 @@ namespace VegaAsis.Windows.UserControls
             y += FormRowHeight;
         }
 
+        private void AddFormRowDatePicker(Control parent, string labelText, ref int y, string fieldKey)
+        {
+            int rowTop = y;
+            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
+            parent.Controls.Add(lbl);
+            
+            var dtp = new DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Left = FormInputLeft,
+                Top = rowTop + 3,
+                Width = 100,
+                Height = 22
+            };
+            parent.Controls.Add(dtp);
+            if (!string.IsNullOrEmpty(fieldKey)) _formFields[fieldKey] = dtp;
+            
+            var lblIcon = new Label { Text = "\uD83D\uDCC5", Font = new Font("Segoe UI", 10F), Location = new Point(FormInputLeft + 104, rowTop + 3), AutoSize = true, ForeColor = Color.Gray };
+            parent.Controls.Add(lblIcon);
+            
+            y += FormRowHeight;
+        }
+
+        private void AddFormRowDtSirketi(Control parent, string labelText, ref int y)
+        {
+            int rowTop = y;
+            var lbl = new Label { Text = labelText + ":", AutoSize = false, Size = new Size(FormLabelWidth, 20), Location = new Point(8, rowTop + 4), AutoEllipsis = true, Font = new Font(parent.Font.FontFamily, 9F) };
+            parent.Controls.Add(lbl);
+            
+            var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Left = FormInputLeft, Top = rowTop + 3, Width = 140, Height = 22 };
+            cmb.Items.Add("Seçiniz");
+            cmb.SelectedIndex = 0;
+            parent.Controls.Add(cmb);
+            
+            var lblFolder = new Label { Text = "\uD83D\uDCC1", Font = new Font("Segoe UI", 12F), Location = new Point(FormInputLeft + 144, rowTop + 2), AutoSize = true, ForeColor = Color.FromArgb(0, 150, 57) };
+            parent.Controls.Add(lblFolder);
+            
+            y += FormRowHeight;
+        }
+
+        private Button CreateActionButton(string text, Image icon, ref int y)
+        {
+            var btn = new Button
+            {
+                Text = text,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(122, 32),
+                Location = new Point(4, y),
+                Font = new Font("Segoe UI", 9F),
+                TextAlign = ContentAlignment.MiddleLeft,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                Padding = new Padding(2, 0, 0, 0),
+                Cursor = Cursors.Hand
+            };
+            if (icon != null)
+            {
+                var resizedIcon = new Bitmap(18, 18);
+                using (var g = Graphics.FromImage(resizedIcon))
+                {
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(icon, 0, 0, 18, 18);
+                }
+                btn.Image = resizedIcon;
+            }
+            btn.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            y += 36;
+            return btn;
+        }
+
         private void BuildStatusBar()
         {
-            const int StatusItemGap = 24;
+            const int StatusItemGap = 16;
+            const int FooterTopMargin = 20;
+            var statusWrapper = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 32 + FooterTopMargin,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0, FooterTopMargin, 0, 0)
+            };
             var statusBar = new Panel
             {
                 Dock = DockStyle.Bottom,
@@ -1189,17 +1421,54 @@ namespace VegaAsis.Windows.UserControls
                 Padding = new Padding(12, 6, 12, 6)
             };
             var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, Padding = new Padding(0) };
-            string[] items = { "Tramer", "Egm", "Sanal T.", "Dışa Al", "Ram", "Eğitim (YENİ)" };
-            Color[] colors = { Color.LimeGreen, Color.LimeGreen, Color.Orange, Color.Orange, Color.LimeGreen, Color.Red };
-            for (int i = 0; i < items.Length; i++)
+            var statusFont = new Font("Segoe UI", 8.5F);
+
+            AddStatusItem(flow, Icons.Tramer, "Tramer", Color.LimeGreen, statusFont, StatusItemGap);
+            AddStatusItem(flow, Icons.Egm, "Egm", Color.LimeGreen, statusFont, StatusItemGap);
+            AddStatusItem(flow, Icons.SanalT, "Sanal T.", Color.Orange, statusFont, StatusItemGap);
+            AddStatusItem(flow, Icons.DisaAl, "Dışa Al", Color.Orange, statusFont, StatusItemGap);
+
+            var lblRam = new Label { Text = "Ram:", AutoSize = true, Margin = new Padding(0, 4, 4, 0), Font = statusFont };
+            flow.Controls.Add(lblRam);
+            var ramProgress = new ProgressBar { Size = new Size(80, 14), Value = 50, Margin = new Padding(0, 5, StatusItemGap, 0) };
+            flow.Controls.Add(ramProgress);
+
+            for (int i = 0; i < 5; i++)
             {
-                var p = new Panel { Size = new Size(10, 10), BackColor = colors[i], Margin = new Padding(0, 4, 6, 0) };
-                var lbl = new Label { Text = items[i], AutoSize = true, Margin = new Padding(0, 2, StatusItemGap, 0) };
-                flow.Controls.Add(p);
-                flow.Controls.Add(lbl);
+                var circle = new Panel { Size = new Size(10, 10), Margin = new Padding(0, 5, 4, 0), BackColor = GetCircleColor(i) };
+                flow.Controls.Add(circle);
             }
             statusBar.Controls.Add(flow);
-            Controls.Add(statusBar);
+            statusWrapper.Controls.Add(statusBar);
+            Controls.Add(statusWrapper);
+        }
+
+        private void AddStatusItem(FlowLayoutPanel flow, Image icon, string text, Color indicatorColor, Font font, int gap)
+        {
+            if (icon != null)
+            {
+                var pb = new PictureBox { Size = new Size(16, 16), Margin = new Padding(0, 4, 4, 0), SizeMode = PictureBoxSizeMode.StretchImage, Image = icon };
+                flow.Controls.Add(pb);
+            }
+            else
+            {
+                var p = new Panel { Size = new Size(10, 10), BackColor = indicatorColor, Margin = new Padding(0, 5, 4, 0) };
+                flow.Controls.Add(p);
+            }
+            var lbl = new Label { Text = text, AutoSize = true, Margin = new Padding(0, 4, gap, 0), Font = font };
+            flow.Controls.Add(lbl);
+        }
+
+        private static Color GetCircleColor(int index)
+        {
+            switch (index)
+            {
+                case 0: return Color.LimeGreen;
+                case 1: return Color.DeepSkyBlue;
+                case 2: return Color.Orange;
+                case 3: return Color.Red;
+                default: return Color.Gray;
+            }
         }
     }
 }

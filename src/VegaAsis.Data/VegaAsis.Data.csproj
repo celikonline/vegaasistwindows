@@ -78,6 +78,7 @@
     <Compile Include="Services\UavtService.cs" />
     <Compile Include="Services\SablonService.cs" />
     <Compile Include="Services\WsSorguService.cs" />
+    <Compile Include="Services\BildirimService.cs" />
     <Compile Include="Services\OfferService.cs" />
     <Compile Include="Services\PolicyService.cs" />
     <Compile Include="Services\QuotaSettingsService.cs" />

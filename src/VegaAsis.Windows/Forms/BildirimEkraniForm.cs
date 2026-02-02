@@ -1,6 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Core.DTOs;
+using VegaAsis.Windows;
 
 namespace VegaAsis.Windows.Forms
 {
@@ -14,7 +20,42 @@ namespace VegaAsis.Windows.Forms
         public BildirimEkraniForm()
         {
             InitializeComponent();
-            OrnekBildirimYukle();
+            Load += BildirimEkraniForm_Load;
+        }
+
+        private async void BildirimEkraniForm_Load(object sender, EventArgs e)
+        {
+            if (ServiceLocator.IsInitialized)
+            {
+                await VerileriYukleAsync().ConfigureAwait(true);
+            }
+            else
+            {
+                OrnekBildirimYukle();
+            }
+        }
+
+        private async Task VerileriYukleAsync()
+        {
+            try
+            {
+                var service = ServiceLocator.Resolve<IBildirimService>();
+                var list = await service.GetAllAsync().ConfigureAwait(true);
+                _lstBildirimler.Items.Clear();
+                if (list != null)
+                {
+                    foreach (var dto in list)
+                    {
+                        var tarihStr = dto.Tarih.HasValue ? dto.Tarih.Value.ToString("dd.MM HH:mm") : "";
+                        _lstBildirimler.Items.Add(new ListViewItem(new[] { tarihStr, dto.Tip ?? "", dto.Baslik ?? "", dto.Icerik ?? "" }));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Bildirimler yüklenirken hata: " + ex.Message, "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                OrnekBildirimYukle();
+            }
         }
 
         private void InitializeComponent()
@@ -51,9 +92,9 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(_lstBildirimler);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 45 };
-            _btnTemizle = new Button { Text = "Temizle", Size = new Size(80, 28), Location = new Point(12, 8) };
+            _btnTemizle = new Button { Text = "Temizle", Size = new Size(80, 28), Location = new Point(12, 8), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
             _btnTemizle.Click += (s, e) => { _lstBildirimler.Items.Clear(); };
-            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(398, 8) };
+            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(398, 8), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnTemizle);
             pnlAlt.Controls.Add(_btnKapat);

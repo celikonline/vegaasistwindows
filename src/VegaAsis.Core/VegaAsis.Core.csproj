@@ -51,6 +51,7 @@
     <Compile Include="Contracts\IUavtService.cs" />
     <Compile Include="Contracts\ISablonService.cs" />
     <Compile Include="Contracts\IWsSorguService.cs" />
+    <Compile Include="Contracts\IBildirimService.cs" />
     <Compile Include="DTOs\AppointmentDto.cs" />
     <Compile Include="DTOs\AppSettingsDto.cs" />
     <Compile Include="DTOs\CompanySettingsDto.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="DTOs\UavtSonucDto.cs" />
     <Compile Include="DTOs\SablonDto.cs" />
     <Compile Include="DTOs\WSTeklifSonucDto.cs" />
+    <Compile Include="DTOs\BildirimDto.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,6 @@
 # Plan Durum Özeti
 
-**Güncelleme:** Faz 1, 2 ve 3 tamamlandı; Faz 4 ve sonrası bekliyor.
+**Güncelleme:** Faz 1–5 tamamlandı; Faz 6 form/servis entegrasyonları ve layout iyileştirmeleri yapıldı.
 
 ---
 
@@ -72,11 +72,23 @@
 
 | # | Görev | Durum |
 |---|-------|--------|
-| 6.1 | frmManuelUavtSorgu | ✅ Form mevcut; UAVT servisi eklendiğinde bağlanacak (DOCS/Faz6-Kalan-Formlar-Notlari.md) |
-| 6.2 | frmTramerSorgu | ✅ ITramerService bağlı; gerçek API ile TramerService doldurulacak |
-| 6.3 | Loading / Bildirim (LoadingForm, BildirimEkraniForm) | ✅ Formlar mevcut; bildirim servisi istenirse bağlanır |
-| 6.4 | Otomatik Sorgu (SablonDuzenleForm, WSTeklifleriniSorgulaForm) | ✅ Formlar mevcut; şablon/WS servisleri eklendiğinde bağlanır |
-| 6.5 | Layout Düzeltmeleri | ⏳ İhtiyaç halinde |
+| 6.1 | frmManuelUavtSorgu | ✅ IUavtService bağlı; UavtService App.config UavtApiBaseUrl ile HTTP (boşsa boş liste) |
+| 6.2 | frmTramerSorgu | ✅ ITramerService bağlı; TramerService App.config TramerApiBaseUrl ile HTTP (boşsa boş liste) |
+| 6.3 | Loading / Bildirim | ✅ BildirimEkraniForm IBildirimService ile bağlandı; LoadingForm mevcut |
+| 6.4 | Otomatik Sorgu (SablonDuzenleForm, WSTeklifleriniSorgulaForm) | ✅ ISablonService + IWsSorguService bağlandı; listeleme, kaydet, sil, sorgula servisten |
+| 6.5 | Layout Düzeltmeleri | ✅ SablonDuzenle, WSTeklifleriniSorgula, BildirimEkrani, ManuelUavtSorgu, TramerSorgu formlarında anchor uygulandı |
+
+---
+
+## Sonraki Adımlar / Opsiyonel İyileştirmeler
+
+| Öncelik | Konu | Açıklama |
+|---------|------|----------|
+| Yapılandırma | Tramer / UAVT API | App.config’te `TramerApiBaseUrl` ve `UavtApiBaseUrl` gerçek API adresleriyle doldurulacak |
+| Opsiyonel | WsSorguService | Gerçek WS/API entegrasyonu ile `WsSorguService.SorgulaAsync` doldurulabilir |
+| Opsiyonel | BildirimService | Bildirimler DB veya duyuru kaynağından beslenmek istenirse `BildirimService.GetAllAsync` güncellenir |
+| Opsiyonel | SablonService | Şablonlar kalıcı saklanacaksa DB tablosu + SablonService EF ile yazılabilir |
+| Opsiyonel | Diğer formlar | İhtiyaç halinde ek formlara layout (anchor, font) tutarlılığı uygulanabilir |
 
 ---
 
@@ -99,4 +111,4 @@
 | **Faz 5** | Destek ve Admin | ✅ Tamamlandı |
 | **Faz 6** | Kalan Formlar ve İyileştirmeler | ✅ Formlar mevcut; entegrasyon noktaları dokümante |
 
-**Şu anki konum:** Faz 1–6 tamamlandı veya altyapı/formalarla hazır. Kalan işler: Tramer gerçek API, UAVT/şablon/WS servis entegrasyonları, layout iyileştirmeleri.
+**Şu anki konum:** Faz 1–6 tamamlandı. Tramer/UAVT için sadece App.config’te API URL’leri doldurulacak. WsSorguService ve BildirimService gerçek kaynakla değiştirilebilir. Layout iyileştirmeleri uygulandı.

@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using VegaAsis.Core.Contracts;
 using VegaAsis.Core.DTOs;
@@ -32,105 +33,10 @@ namespace VegaAsis.Windows
             _appointmentService = appointmentService ?? throw new ArgumentNullException(nameof(appointmentService));
             _companySettingsService = companySettingsService ?? throw new ArgumentNullException(nameof(companySettingsService));
             _userManagementService = userManagementService ?? throw new ArgumentNullException(nameof(userManagementService));
-            Text = "VegaAsis";
+            Text = "Open Hızlı Teklif Sistemi V3 - Ana Acente : ANGORA SİGORTA - 87945 - Yönetici : VOLKAN - Sürüm : 3.0.0.348 | Bağlandı!";
             Size = new Size(1024, 768);
             MinimumSize = new Size(800, 600);
-
-            var menuStrip = new MenuStrip();
-            var mnuDosya = new ToolStripMenuItem("Dosya");
-            var mnuCikis = new ToolStripMenuItem("Çıkış");
-            mnuCikis.Click += (s, e) => { _authService.Logout(); Close(); };
-            mnuDosya.DropDownItems.Add(mnuCikis);
-
-            var mnuYonetim = new ToolStripMenuItem("Yönetim");
-            var mnuAdminPanel = new ToolStripMenuItem("Yönetim Paneli");
-            mnuAdminPanel.ShortcutKeys = Keys.Control | Keys.P;
-            mnuAdminPanel.Click += (s, e) => OpenForm(new AdminPanelForm(_companySettingsService, _userManagementService, _authService));
-            var mnuGenelAyarlar = new ToolStripMenuItem("Genel Ayarlar");
-            mnuGenelAyarlar.Click += (s, e) => OpenForm(new ConfigForm());
-            mnuYonetim.DropDownItems.Add(mnuAdminPanel);
-            mnuYonetim.DropDownItems.Add(mnuGenelAyarlar);
-
-            var mnuSayfalar = new ToolStripMenuItem("Sayfalar");
-            var mnuAnaSayfa = new ToolStripMenuItem("Ana Sayfa");
-            var mnuTeklifler = new ToolStripMenuItem("Teklifler");
-            var mnuPolicelerim = new ToolStripMenuItem("Policelerim");
-            var mnuAjanda = new ToolStripMenuItem("Ajanda");
-            var mnuSirketlerRobot = new ToolStripMenuItem("Şirketler / Robot");
-            var mnuRaporlar = new ToolStripMenuItem("Raporlar");
-            var mnuDestek = new ToolStripMenuItem("Destek Talepleri");
-            var mnuDuyurular = new ToolStripMenuItem("Duyurular");
-            var mnuCanliUretim = new ToolStripMenuItem("Canlı Üretim");
-            var mnuCanliDestek = new ToolStripMenuItem("Canlı Destek");
-            var mnuPoliceNoGit = new ToolStripMenuItem("Poliçe No ile Git");
-            var mnuTeklifNoGit = new ToolStripMenuItem("Teklif No ile Git");
-            var mnuExcelOku = new ToolStripMenuItem("Excel Oku");
-            var mnuOncekiPolice = new ToolStripMenuItem("Önceki Poliçe");
-            var mnuCokluFiyat = new ToolStripMenuItem("Çoklu Fiyat Karşılaştırma");
-            var mnuManuelUavt = new ToolStripMenuItem("Manuel UAVT Sorgusu");
-            var mnuTramerSorgu = new ToolStripMenuItem("Tramer Sorgusu");
-            var mnuBildirimler = new ToolStripMenuItem("Bildirimler");
-            var mnuSablonDuzenle = new ToolStripMenuItem("Şablon Düzenle");
-            var mnuWSTeklifSorgula = new ToolStripMenuItem("WS Tekliflerini Sorgula");
-
-            mnuAnaSayfa.ShortcutKeys = Keys.Control | Keys.H;
-            mnuAnaSayfa.Click += (s, e) => ShowIndexView();
-            mnuTeklifler.ShortcutKeys = Keys.Control | Keys.T;
-            mnuTeklifler.Click += (s, e) => OpenForm(new TekliflerForm(_authService, _offerService));
-            mnuPolicelerim.ShortcutKeys = Keys.Control | Keys.L;
-            mnuPolicelerim.Click += (s, e) => OpenForm(new PolicelerimForm(_policyService));
-            mnuAjanda.ShortcutKeys = Keys.Control | Keys.J;
-            mnuAjanda.Click += (s, e) => OpenForm(new AjandaYenilemeForm(_appointmentService));
-            mnuSirketlerRobot.Click += (s, e) => OpenForm(new SirketlerRobotForm());
-            mnuRaporlar.ShortcutKeys = Keys.Control | Keys.R;
-            mnuRaporlar.Click += (s, e) => OpenForm(new RaporlarForm(_offerService, _policyService));
-            mnuDestek.Click += (s, e) => OpenForm(new DestekTalepleriForm());
-            mnuDuyurular.Click += (s, e) => OpenForm(new DuyurularForm());
-            mnuCanliUretim.Click += (s, e) => OpenForm(new CanliUretimForm());
-            mnuCanliDestek.Click += (s, e) => OpenForm(new CanliDestekForm());
-            mnuPoliceNoGit.Click += (s, e) => OpenPoliceNoGit();
-            mnuTeklifNoGit.Click += (s, e) => OpenTeklifNoGit();
-            mnuExcelOku.Click += (s, e) => OpenForm(new ExcelOkuForm());
-            mnuOncekiPolice.Click += (s, e) => OpenForm(new OncekiPoliceForm());
-            mnuCokluFiyat.Click += (s, e) =>
-            {
-                var idx = _contentPanel.Controls.Count > 0 ? _contentPanel.Controls[0] as UserControls.IndexViewControl : null;
-                var satirlar = idx?.GetFiyatSatirlari();
-                OpenForm(new CokluFiyatForm(satirlar));
-            };
-            mnuManuelUavt.Click += (s, e) => OpenForm(new ManuelUavtSorguForm());
-            mnuTramerSorgu.Click += (s, e) => OpenForm(new TramerSorguForm());
-            mnuBildirimler.Click += (s, e) => OpenForm(new BildirimEkraniForm());
-            mnuSablonDuzenle.Click += (s, e) => OpenForm(new SablonDuzenleForm());
-            mnuWSTeklifSorgula.Click += (s, e) => OpenForm(new WSTeklifleriniSorgulaForm());
-
-            mnuSayfalar.DropDownItems.AddRange(new ToolStripItem[] {
-                mnuAnaSayfa, mnuTeklifler, mnuPolicelerim, mnuAjanda,
-                mnuSirketlerRobot, mnuRaporlar, mnuDestek, mnuDuyurular,
-                mnuCanliUretim, mnuCanliDestek, new ToolStripSeparator(),
-                mnuExcelOku, mnuOncekiPolice, mnuCokluFiyat, mnuManuelUavt, mnuTramerSorgu, mnuBildirimler, mnuSablonDuzenle, mnuWSTeklifSorgula, mnuPoliceNoGit, mnuTeklifNoGit
-            });
-
-            menuStrip.Items.Add(mnuDosya);
-            menuStrip.Items.Add(mnuSayfalar);
-            menuStrip.Items.Add(mnuYonetim);
-            MainMenuStrip = menuStrip;
-            Controls.Add(menuStrip);
-
-            var toolStrip = new ToolStrip
-            {
-                GripStyle = ToolStripGripStyle.Hidden,
-                ImageScalingSize = new Size(20, 20),
-                Padding = new Padding(4, 2, 4, 2)
-            };
-            toolStrip.Items.Add(new ToolStripButton("Ana Sayfa", null, (s, e) => ShowIndexView()) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            toolStrip.Items.Add(new ToolStripButton("Teklifler", null, (s, e) => OpenForm(new TekliflerForm(_authService, _offerService))) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            toolStrip.Items.Add(new ToolStripButton("Policelerim", null, (s, e) => OpenForm(new PolicelerimForm(_policyService))) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            toolStrip.Items.Add(new ToolStripSeparator());
-            toolStrip.Items.Add(new ToolStripButton("Yönetim Paneli", null, (s, e) => OpenForm(new AdminPanelForm(_companySettingsService, _userManagementService, _authService))) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            toolStrip.Items.Add(new ToolStripButton("Şirket Seç", null, (s, e) => OpenSirketSecim()) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            toolStrip.Items.Add(new ToolStripButton("Excel Oku", null, (s, e) => OpenForm(new ExcelOkuForm())) { DisplayStyle = ToolStripItemDisplayStyle.Text });
-            Controls.Add(toolStrip);
+            Icon = CreateRedCircleIcon();
 
             _contentPanel = new Panel
             {
@@ -161,15 +67,6 @@ namespace VegaAsis.Windows
             indexControl.DuyurularRequested += (s, e) => OpenForm(new DuyurularForm());
             indexControl.CanliUretimRequested += (s, e) => OpenForm(new CanliUretimForm());
             indexControl.CanliDestekRequested += (s, e) => OpenForm(new CanliDestekForm());
-            indexControl.BranchFormRequested += (s, branch) =>
-            {
-                if (branch == "TRAFİK") OpenForm(new TrafikTeklifiForm());
-                else if (branch == "KASKO") OpenForm(new KaskoTeminatlariForm());
-                else if (branch == "TSS") OpenForm(new TssDetaylariForm());
-                else if (branch == "DASK") OpenForm(new DaskDetaylariForm());
-                else if (branch == "KONUT") OpenForm(new KonutTeminatlariForm());
-                else if (branch == "İMM") OpenForm(new ImmTeminatlariForm());
-            };
             indexControl.BranchCellClickRequested += (s, e) =>
             {
                 var branch = e.Branch;
@@ -303,6 +200,23 @@ namespace VegaAsis.Windows
         private void ShowInfo(string message, string title)
         {
             MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private static Icon CreateRedCircleIcon()
+        {
+            const int size = 32;
+            var bmp = new Bitmap(size, size);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+                using (var brush = new SolidBrush(Color.FromArgb(211, 47, 47)))
+                    g.FillEllipse(brush, 2, 2, size - 4, size - 4);
+            }
+            var hicon = bmp.GetHicon();
+            var icon = (Icon)Icon.FromHandle(hicon).Clone();
+            bmp.Dispose();
+            return icon;
         }
     }
 }

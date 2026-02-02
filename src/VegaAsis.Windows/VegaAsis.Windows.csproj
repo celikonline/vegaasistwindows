@@ -272,6 +272,7 @@
     <Compile Include="Data\VehicleBrandsAndTypes.cs" />
     <Compile Include="Data\SigortaSirketleri.cs" />
     <Compile Include="Data\YapiTarziOptions.cs" />
+    <Compile Include="Data\CompanyLogoData.cs" />
     <Compile Include="Models\SorguSession.cs" />
     <Compile Include="Models\BranchCellClickEventArgs.cs" />
     <Compile Include="Robot\IBrowserDriver.cs" />
@@ -288,6 +289,12 @@
     <Compile Include="Robot\ICaptchaResolver.cs" />
     <Compile Include="Robot\TwoCaptchaResolver.cs" />
     <Compile Include="Robot\ManuelCaptchaResolver.cs" />
+    <Compile Include="Resources\Icons.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

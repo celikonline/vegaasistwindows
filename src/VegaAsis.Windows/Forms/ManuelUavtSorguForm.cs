@@ -36,7 +36,8 @@ namespace VegaAsis.Windows.Forms
             {
                 Text = "UAVT Sorgu Bilgileri",
                 Location = new Point(12, 12),
-                Size = new Size(586, 110)
+                Size = new Size(586, 110),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             _rbTcKimlik = new RadioButton { Text = "TC Kimlik / Vergi No ile", Location = new Point(12, 22), Checked = true };
             _rbPlaka = new RadioButton { Text = "Plaka ile", Location = new Point(12, 48) };
@@ -50,7 +51,7 @@ namespace VegaAsis.Windows.Forms
             _grpSorgu.Controls.Add(_rbPlaka);
             _rbTcKimlik.CheckedChanged += (s, e) => { if (_rbTcKimlik.Checked) { _txtTcVergi.Enabled = true; _txtPlaka.Enabled = false; _txtPlaka.Clear(); } };
             _rbPlaka.CheckedChanged += (s, e) => { if (_rbPlaka.Checked) { _txtTcVergi.Enabled = false; _txtTcVergi.Clear(); _txtPlaka.Enabled = true; } };
-            _btnSorgula = new Button { Text = "Sorgula", Location = new Point(440, 45), Size = new Size(120, 32) };
+            _btnSorgula = new Button { Text = "Sorgula", Location = new Point(440, 45), Size = new Size(120, 32), Anchor = AnchorStyles.Top | AnchorStyles.Right };
             _btnSorgula.Click += BtnSorgula_Click;
             _grpSorgu.Controls.Add(_btnSorgula);
             Controls.Add(_grpSorgu);
@@ -71,7 +72,7 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(_grpSonuclar);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 48 };
-            _btnKapat = new Button { Text = "Kapat", Size = new Size(90, 28), Location = new Point(502, 10) };
+            _btnKapat = new Button { Text = "Kapat", Size = new Size(90, 28), Location = new Point(502, 10), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);

@@ -36,7 +36,8 @@ namespace VegaAsis.Windows.Forms
             {
                 Text = "Tramer Sorgu Bilgileri",
                 Location = new Point(12, 12),
-                Size = new Size(586, 110)
+                Size = new Size(586, 110),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             _rbPlaka = new RadioButton { Text = "Plaka ile Sorgula", Location = new Point(12, 22), Checked = true };
             _rbSasiNo = new RadioButton { Text = "Şasi No ile Sorgula", Location = new Point(12, 48) };
@@ -72,7 +73,7 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(_grpSonuclar);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 48 };
-            _btnKapat = new Button { Text = "Kapat", Size = new Size(90, 28), Location = new Point(502, 10) };
+            _btnKapat = new Button { Text = "Kapat", Size = new Size(90, 28), Location = new Point(502, 10), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);

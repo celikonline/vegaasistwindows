@@ -86,17 +86,17 @@ namespace VegaAsis.Windows.Forms
             var rightPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8) };
             int y = 12;
             rightPanel.Controls.Add(new Label { Text = "Şablon Adı:", Left = 8, Top = y });
-            _txtSablonAdi = new TextBox { Left = 100, Top = y - 2, Width = 250 };
+            _txtSablonAdi = new TextBox { Left = 100, Top = y - 2, Width = 250, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             rightPanel.Controls.Add(_txtSablonAdi);
             y += 32;
             rightPanel.Controls.Add(new Label { Text = "Branş:", Left = 8, Top = y });
-            _cmbBrans = new ComboBox { Left = 100, Top = y - 2, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            _cmbBrans = new ComboBox { Left = 100, Top = y - 2, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             _cmbBrans.Items.AddRange(new object[] { "TRAFİK", "KASKO", "DASK", "TSS", "KONUT", "İMM" });
             if (_cmbBrans.Items.Count > 0) _cmbBrans.SelectedIndex = 0;
             rightPanel.Controls.Add(_cmbBrans);
             y += 32;
             rightPanel.Controls.Add(new Label { Text = "Şirketler:", Left = 8, Top = y });
-            _chkSirketler = new CheckedListBox { Left = 100, Top = y, Width = 250, Height = 140 };
+            _chkSirketler = new CheckedListBox { Left = 100, Top = y, Width = 250, Height = 140, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             rightPanel.Controls.Add(_chkSirketler);
             y += 150;
             _btnYeni = new Button { Text = "Yeni", Size = new Size(70, 28), Location = new Point(8, y) };
@@ -117,7 +117,7 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(split);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 45 };
-            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(458, 8) };
+            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(458, 8), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);

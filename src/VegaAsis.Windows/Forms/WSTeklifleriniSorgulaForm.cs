@@ -76,12 +76,12 @@ namespace VegaAsis.Windows.Forms
             topPanel.Controls.Add(new Label { Text = "Bitiş:", Left = 270, Top = y });
             _dtpBitis = new DateTimePicker { Left = 320, Top = y - 2, Width = 150 };
             topPanel.Controls.Add(_dtpBitis);
-            _btnSorgula = new Button { Text = "Sorgula", Size = new Size(100, 28), Location = new Point(490, y - 4) };
+            _btnSorgula = new Button { Text = "Sorgula", Size = new Size(100, 28), Location = new Point(490, y - 4), Anchor = AnchorStyles.Top | AnchorStyles.Right };
             _btnSorgula.Click += BtnSorgula_Click;
             topPanel.Controls.Add(_btnSorgula);
             _lblDurum = new Label { Text = "", Left = 12, Top = 70, AutoSize = true };
             topPanel.Controls.Add(_lblDurum);
-            _progressBar = new ProgressBar { Left = 100, Top = 68, Width = 490, Height = 20 };
+            _progressBar = new ProgressBar { Left = 100, Top = 68, Width = 490, Height = 20, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             topPanel.Controls.Add(_progressBar);
             Controls.Add(topPanel);
 
@@ -100,7 +100,7 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(_dgvSonuclar);
 
             var pnlAlt = new Panel { Dock = DockStyle.Bottom, Height = 45 };
-            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(608, 8) };
+            _btnKapat = new Button { Text = "Kapat", Size = new Size(80, 28), Location = new Point(608, 8), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             _btnKapat.Click += (s, e) => Close();
             pnlAlt.Controls.Add(_btnKapat);
             Controls.Add(pnlAlt);

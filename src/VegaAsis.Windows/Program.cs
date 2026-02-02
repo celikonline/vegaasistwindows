@@ -54,6 +54,7 @@ namespace VegaAsis.Windows
             builder.RegisterType<UavtService>().As<IUavtService>().InstancePerLifetimeScope();
             builder.RegisterType<SablonService>().As<ISablonService>().InstancePerLifetimeScope();
             builder.RegisterType<WsSorguService>().As<IWsSorguService>().InstancePerLifetimeScope();
+            builder.RegisterType<BildirimService>().As<IBildirimService>().InstancePerLifetimeScope();
             builder.RegisterType<UserGroupService>().As<IUserGroupService>().InstancePerLifetimeScope();
             builder.RegisterType<QuotaSettingsService>().As<IQuotaSettingsService>().InstancePerLifetimeScope();
             var container = builder.Build();
