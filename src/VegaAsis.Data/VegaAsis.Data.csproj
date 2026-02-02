@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entities\Announcement.cs" />
+    <Compile Include="Entities\AnnouncementRead.cs" />
     <Compile Include="Entities\Appointment.cs" />
     <Compile Include="Entities\AppSettings.cs" />
     <Compile Include="Entities\CompanySettings.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="Entities\UserRole.cs" />
     <Compile Include="Entities\UserSettings.cs" />
     <Compile Include="Entities\WebUser.cs" />
+    <Compile Include="Entities\CompanyCredential.cs" />
     <Compile Include="Services\AnnouncementService.cs" />
     <Compile Include="Services\AppointmentService.cs" />
     <Compile Include="Services\AppSettingsService.cs" />
@@ -86,6 +88,7 @@
     <Compile Include="Services\WebUserService.cs" />
     <Compile Include="Services\UserGroupService.cs" />
     <Compile Include="Services\UserManagementService.cs" />
+    <Compile Include="Services\CompanyCredentialService.cs" />
     <Compile Include="VegaAsisDbContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

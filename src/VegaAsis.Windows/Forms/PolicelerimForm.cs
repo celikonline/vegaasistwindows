@@ -5,6 +5,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using VegaAsis.Core.Contracts;
+using VegaAsis.Windows;
 using ClosedXML.Excel;
 using VegaAsis.Core.Contracts;
 using VegaAsis.Core.DTOs;
@@ -15,7 +17,7 @@ namespace VegaAsis.Windows.Forms
     {
         private readonly IPolicyService _policyService;
         private DataGridView _grid;
-        private Button _btnYenile, _btnSeclileriSil, _btnExcelAktar;
+        private Button _btnYenile, _btnYeni, _btnSeclileriSil, _btnExcelAktar;
         private TextBox _txtArama;
         private ComboBox _cmbPersonel, _cmbPoliceTuru, _cmbKayitTipi, _cmbDovizTipi, _cmbLimit;
         private CheckBox _chkTarihFiltre;
@@ -45,14 +47,17 @@ namespace VegaAsis.Windows.Forms
             var filterPanel = BuildFilterPanel();
             var toolPanel = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 36, Padding = new Padding(4) };
             _btnYenile = new Button { Text = "Yenile", Width = 80, Height = 28 };
+            _btnYeni = new Button { Text = "Yeni Poliçe", Width = 90, Height = 28 };
             _btnSeclileriSil = new Button { Text = "Seçilenleri Sil", Width = 110, Height = 28 };
             _btnExcelAktar = new Button { Text = "Excel Aktar", Width = 100, Height = 28 };
 
             _btnYenile.Click += (s, e) => _ = LoadPoliciesAsync();
+            _btnYeni.Click += (s, e) => YeniPolicy();
             _btnSeclileriSil.Click += (s, e) => _ = SilSeclileriAsync();
             _btnExcelAktar.Click += (s, e) => ExcelAktar();
 
             toolPanel.Controls.Add(_btnYenile);
+            toolPanel.Controls.Add(_btnYeni);
             toolPanel.Controls.Add(_btnSeclileriSil);
             toolPanel.Controls.Add(_btnExcelAktar);
 
@@ -189,6 +194,54 @@ namespace VegaAsis.Windows.Forms
                 {
                     _ = KaydetVeYenileAsync(detay.EditedPolicy);
                 }
+            }
+        }
+
+        private void YeniPolicy()
+        {
+            if (!ServiceLocator.IsInitialized)
+            {
+                MessageBox.Show("Servisler başlatılamadı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            var auth = ServiceLocator.Resolve<IAuthService>();
+            var userId = auth?.GetCurrentUserId;
+            if (!userId.HasValue)
+            {
+                MessageBox.Show("Giriş yapmalısınız.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            var yeni = new PolicyDto
+            {
+                Id = Guid.Empty,
+                UserId = userId.Value,
+                PoliceTuru = "TRAFİK",
+                DovizTipi = "TL",
+                KayitTipi = "Manuel",
+                KayitTarihi = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            using (var detay = new PoliceDetayForm(yeni))
+            {
+                if (detay.ShowDialog(this) == DialogResult.OK && detay.EditedPolicy != null)
+                {
+                    _ = KaydetYeniAsync(detay.EditedPolicy);
+                }
+            }
+        }
+
+        private async Task KaydetYeniAsync(PolicyDto dto)
+        {
+            try
+            {
+                await _policyService.CreateAsync(dto).ConfigureAwait(true);
+                MessageBox.Show("Yeni poliçe oluşturuldu.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadPoliciesAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Kaydetme hatası: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

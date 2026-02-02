@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace VegaAsis.Windows.Forms
@@ -15,6 +16,7 @@ namespace VegaAsis.Windows.Forms
         private Button _btnIndir;
         private Button _btnSil;
         private Button _btnKapat;
+        private string _storageDir;
 
         public string TeklifNo { get; set; }
 
@@ -23,7 +25,9 @@ namespace VegaAsis.Windows.Forms
             TeklifNo = teklifNo ?? throw new ArgumentNullException(nameof(teklifNo));
 
             InitializeComponent();
-            LoadSampleData();
+            _storageDir = GetStorageDir();
+            EnsureStorage();
+            LoadFiles();
         }
 
         private void InitializeComponent()
@@ -127,26 +131,37 @@ namespace VegaAsis.Windows.Forms
             Controls.Add(_pnlAlt);
         }
 
-        private void LoadSampleData()
+        private string GetStorageDir()
         {
-            // Örnek veri ekle
-            var item1 = new ListViewItem("Teklif_Dokumani.pdf");
-            item1.SubItems.Add("245 KB");
-            item1.SubItems.Add("01.02.2026 10:30");
-            item1.SubItems.Add("PDF");
-            _lvDosyalar.Items.Add(item1);
+            var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VegaAsis", "attachments");
+            return Path.Combine(baseDir, TeklifNo);
+        }
 
-            var item2 = new ListViewItem("Fotograf.jpg");
-            item2.SubItems.Add("1.2 MB");
-            item2.SubItems.Add("01.02.2026 11:15");
-            item2.SubItems.Add("Resim");
-            _lvDosyalar.Items.Add(item2);
+        private void EnsureStorage()
+        {
+            if (!Directory.Exists(_storageDir))
+                Directory.CreateDirectory(_storageDir);
+        }
 
-            var item3 = new ListViewItem("Ek_Belgeler.docx");
-            item3.SubItems.Add("156 KB");
-            item3.SubItems.Add("01.02.2026 12:00");
-            item3.SubItems.Add("Word");
-            _lvDosyalar.Items.Add(item3);
+        private void LoadFiles()
+        {
+            _lvDosyalar.Items.Clear();
+            if (!Directory.Exists(_storageDir)) return;
+            var files = new DirectoryInfo(_storageDir).GetFiles()
+                .OrderByDescending(f => f.CreationTimeUtc)
+                .ToList();
+            foreach (var f in files)
+            {
+                var fileSize = FormatFileSize(f.Length);
+                var fileExtension = f.Extension.ToUpperInvariant().TrimStart('.');
+                var fileType = GetFileType(fileExtension);
+                var item = new ListViewItem(f.Name);
+                item.SubItems.Add(fileSize);
+                item.SubItems.Add(f.CreationTime.ToString("dd.MM.yyyy HH:mm"));
+                item.SubItems.Add(fileType);
+                item.Tag = f.FullName;
+                _lvDosyalar.Items.Add(item);
+            }
         }
 
         private void BtnDosyaEkle_Click(object sender, EventArgs e)
@@ -159,17 +174,24 @@ namespace VegaAsis.Windows.Forms
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    var fileInfo = new FileInfo(openFileDialog.FileName);
-                    var fileSize = FormatFileSize(fileInfo.Length);
-                    var fileExtension = fileInfo.Extension.ToUpper().TrimStart('.');
-                    var fileType = GetFileType(fileExtension);
-
-                    var item = new ListViewItem(fileInfo.Name);
-                    item.SubItems.Add(fileSize);
-                    item.SubItems.Add(DateTime.Now.ToString("dd.MM.yyyy HH:mm"));
-                    item.SubItems.Add(fileType);
-                    item.Tag = openFileDialog.FileName; // Orijinal dosya yolu
-                    _lvDosyalar.Items.Add(item);
+                    try
+                    {
+                        EnsureStorage();
+                        var fileInfo = new FileInfo(openFileDialog.FileName);
+                        var destPath = Path.Combine(_storageDir, fileInfo.Name);
+                        if (File.Exists(destPath))
+                        {
+                            var name = Path.GetFileNameWithoutExtension(fileInfo.Name);
+                            var ext = fileInfo.Extension;
+                            destPath = Path.Combine(_storageDir, name + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ext);
+                        }
+                        File.Copy(openFileDialog.FileName, destPath, true);
+                        LoadFiles();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Dosya eklenemedi: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -229,8 +251,18 @@ namespace VegaAsis.Windows.Forms
 
             if (result == DialogResult.Yes)
             {
-                _lvDosyalar.Items.Remove(selectedItem);
-                MessageBox.Show("Dosya listeden kaldırıldı.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                var path = selectedItem.Tag as string;
+                try
+                {
+                    if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                        File.Delete(path);
+                    LoadFiles();
+                    MessageBox.Show("Dosya silindi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Dosya silme hatası: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

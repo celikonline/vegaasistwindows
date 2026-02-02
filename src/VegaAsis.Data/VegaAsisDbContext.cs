@@ -29,6 +29,8 @@ namespace VegaAsis.Data
         public virtual DbSet<SharedCompany> SharedCompanies { get; set; }
         public virtual DbSet<ReceivedCompanyShare> ReceivedCompanyShares { get; set; }
         public virtual DbSet<Announcement> Announcements { get; set; }
+        public virtual DbSet<AnnouncementRead> AnnouncementReads { get; set; }
+        public virtual DbSet<CompanyCredential> CompanyCredentials { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

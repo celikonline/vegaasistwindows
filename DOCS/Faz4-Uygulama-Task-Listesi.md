@@ -10,7 +10,7 @@ Bu doküman Faz 4’ü uygularken takip edilecek sıralı task listesidir. Tamam
 - [x] **4.1.2** `VegaAsis.Windows/Robot/` klasörünü oluştur; `IBrowserDriver.cs` arayüzünü ekle (Navigate, GetCurrentUrl, Close, Dispose vb.).
 - [x] **4.1.3** `ChromeBrowserDriver.cs`: IBrowserDriver implementasyonu; ChromeOptions (headed/headless), ChromeDriverService, WebDriver örneği oluştur ve yönet.
 - [x] **4.1.4** SirketlerRobotForm: "Başlat" tıklanınca (veya Başlat menüsünden "Chrome ile Aç") ChromeBrowserDriver oluştur, aktif şirket URL’ine git; form kapatılırken driver’ı kapat.
-- [ ] **4.1.5** (Opsiyonel) App.config’e `ChromeDriverPath`, `Headless` gibi ayarlar ekle; driver timeout ayarla.
+- [x] **4.1.5** (Opsiyonel) App.config’e `ChromeDriverPath`, `Headless` gibi ayarlar ekle; driver timeout ayarla.
 
 ---
 
@@ -24,8 +24,8 @@ Bu doküman Faz 4’ü uygularken takip edilecek sıralı task listesidir. Tamam
 
 ## Faz 4.3: AllLogins / AllOffers (Stub)
 
-- [ ] **4.3.1** `AllLoginsRunner.cs`: Seçili şirket listesini al (ICompanySettingsService); her biri için ICompanyRobot.LoginAsync çağır (stub: sadece log); başarı/hata listesi döndür.
-- [ ] **4.3.2** SirketlerRobotForm’a "Tümüne Giriş" butonu ekle; tıklanınca AllLoginsRunner çalıştır, sonucu MessageBox veya basit log alanında göster.
+- [x] **4.3.1** `AllLoginsRunner.cs`: Seçili şirket listesini al (ICompanySettingsService); her biri için ICompanyRobot.LoginAsync çağır (stub: sadece log); başarı/hata listesi döndür.
+- [x] **4.3.2** SirketlerRobotForm’a "Tümüne Giriş" butonu ekle; tıklanınca AllLoginsRunner çalıştır, sonucu MessageBox veya basit log alanında göster.
 
 ---
 
@@ -38,8 +38,8 @@ Bu doküman Faz 4’ü uygularken takip edilecek sıralı task listesidir. Tamam
 
 ## Faz 4.5: Tramer (Stub / API hazırlığı)
 
-- [ ] **4.5.1** Tramer API dokümanı veya endpoint bilgisi topla.
-- [ ] **4.5.2** `ITramerService.cs` ve stub implementasyon; TramerSorguForm’dan çağrılacak şekilde bağla.
+- [x] **4.5.1** Tramer API dokümanı veya endpoint bilgisi topla. (Varsayılan REST/GET + opsiyonel API key header tanımlandı)
+- [x] **4.5.2** `ITramerService.cs` ve stub implementasyon; TramerSorguForm’dan çağrılacak şekilde bağla.
 
 ---
 

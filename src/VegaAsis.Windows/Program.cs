@@ -57,7 +57,19 @@ namespace VegaAsis.Windows
             builder.RegisterType<BildirimService>().As<IBildirimService>().InstancePerLifetimeScope();
             builder.RegisterType<UserGroupService>().As<IUserGroupService>().InstancePerLifetimeScope();
             builder.RegisterType<QuotaSettingsService>().As<IQuotaSettingsService>().InstancePerLifetimeScope();
+            builder.RegisterType<CompanyCredentialService>().As<ICompanyCredentialService>().InstancePerLifetimeScope();
             var container = builder.Build();
+
+            // company_credentials tablosu yoksa oluştur
+            using (var migrationScope = container.BeginLifetimeScope())
+            {
+                try
+                {
+                    var db = migrationScope.Resolve<VegaAsisDbContext>();
+                    CompanyCredentialService.EnsureCompanyCredentialsTable(db);
+                }
+                catch { /* veritabanı yok veya yetki hatası */ }
+            }
 
             var scope = container.BeginLifetimeScope();
             ServiceLocator.Initialize(scope);

@@ -215,6 +215,12 @@
     <Compile Include="Forms\TopluKullaniciBilgileriForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\SirketKimlikBilgileriForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\TRF_LoginTestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\MultiTarayiciForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -268,6 +274,9 @@
     </Compile>
     <Compile Include="Data\Professions.cs" />
     <Compile Include="Data\KullanimTarziOptions.cs" />
+    <Compile Include="Data\KasaTipleri.cs" />
+    <Compile Include="Data\GenderOptions.cs" />
+    <Compile Include="Data\FuelTypes.cs" />
     <Compile Include="Data\TurkeyLocations.cs" />
     <Compile Include="Data\VehicleBrandsAndTypes.cs" />
     <Compile Include="Data\SigortaSirketleri.cs" />
@@ -278,14 +287,44 @@
     <Compile Include="Robot\IBrowserDriver.cs" />
     <Compile Include="Robot\ChromeBrowserDriver.cs" />
     <Compile Include="Robot\ICompanyRobot.cs" />
+    <Compile Include="Robot\TRF_Base.cs" />
     <Compile Include="Robot\CompanyRobotRegistry.cs" />
     <Compile Include="Robot\AllLoginResult.cs" />
     <Compile Include="Robot\AllLoginsRunner.cs" />
     <Compile Include="Robot\AllOfferResult.cs" />
     <Compile Include="Robot\AllOffersRunner.cs" />
+    <Compile Include="Robot\ParallelOfferRunner.cs" />
     <Compile Include="Robot\TRF_AkSigorta.cs" />
-    <Compile Include="Robot\TRF_AnaSigortaStub.cs" />
-    <Compile Include="Robot\TRF_AnadoluStub.cs" />
+    <Compile Include="Robot\TRF_Anadolu.cs" />
+    <Compile Include="Robot\TRF_Allianz.cs" />
+    <Compile Include="Robot\TRF_AnaSigorta.cs" />
+    <Compile Include="Robot\TRF_HDI.cs" />
+    <Compile Include="Robot\TRF_Mapfre.cs" />
+    <Compile Include="Robot\TRF_Sompo.cs" />
+    <Compile Include="Robot\TRF_Gunes.cs" />
+    <Compile Include="Robot\TRF_Groupama.cs" />
+    <Compile Include="Robot\TRF_Zurich.cs" />
+    <Compile Include="Robot\TRF_Neova.cs" />
+    <Compile Include="Robot\TRF_Eureko.cs" />
+    <Compile Include="Robot\TRF_Ergo.cs" />
+    <Compile Include="Robot\TRF_Generali.cs" />
+    <Compile Include="Robot\TRF_TurkNippon.cs" />
+    <Compile Include="Robot\TRF_Ray.cs" />
+    <Compile Include="Robot\TRF_Doga.cs" />
+    <Compile Include="Robot\TRF_Ankara.cs" />
+    <Compile Include="Robot\TRF_Halk.cs" />
+    <Compile Include="Robot\TRF_Koru.cs" />
+    <Compile Include="Robot\TRF_Orient.cs" />
+    <Compile Include="Robot\TRF_Quick.cs" />
+    <Compile Include="Robot\TRF_DemirHayat.cs" />
+    <Compile Include="Robot\TRF_Gulf.cs" />
+    <Compile Include="Robot\TRF_Magdeburger.cs" />
+    <Compile Include="Robot\TRF_Bereket.cs" />
+    <Compile Include="Robot\TRF_Corpus.cs" />
+    <Compile Include="Robot\TRF_Hepiyi.cs" />
+    <Compile Include="Robot\TRF_Seker.cs" />
+    <Compile Include="Robot\TRF_Turkiye.cs" />
+    <Compile Include="Robot\TRF_Unico.cs" />
     <Compile Include="Robot\ICaptchaResolver.cs" />
     <Compile Include="Robot\TwoCaptchaResolver.cs" />
     <Compile Include="Robot\ManuelCaptchaResolver.cs" />

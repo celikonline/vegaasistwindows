@@ -10,7 +10,7 @@ Bu doküman Faz 6 formlarının mevcut durumunu ve entegrasyon noktalarını öz
 |--------|--------|
 | Form | ✅ Mevcut – TC/Vergi No veya Plaka ile sorgu alanları, sonuç grid |
 | İş mantığı | ✅ IUavtService ServiceLocator ile çözülüyor; SorgulaTcVergiAsync / SorgulaPlakaAsync çağrılıyor; sonuçlar grid'e yazılıyor |
-| Servis | IUavtService, UavtSonucDto, UavtService (App.config UavtApiBaseUrl ile HTTP GET; boşsa boş liste) |
+| Servis | IUavtService, UavtSonucDto, UavtService (App.config UavtApiBaseUrl ile HTTP GET; opsiyonel header auth; boşsa boş liste) |
 | Sonraki adım | Gerçek UAVT API URL'si App.config'e eklendiğinde sorgu çalışır |
 
 ---
@@ -31,8 +31,8 @@ Bu doküman Faz 6 formlarının mevcut durumunu ve entegrasyon noktalarını öz
 |---------|--------|
 | LoadingForm | ✅ Mevcut – Mesaj, Indeterminate progress; ShowWhile(owner, work, mesaj) ile arka planda iş + modal gösterim |
 | BildirimEkraniForm | ✅ IBildirimService ile bağlandı – Form açılışta servisten liste yükleniyor; ServiceLocator yoksa örnek veri |
-| Servis | IBildirimService, BildirimDto, BildirimService (stub – örnek 3 kayıt); Program.cs'te kayıtlı |
-| Sonraki adım | Bildirimler DB/duyuru kaynağından beslenmek istenirse BildirimService içi doldurulacak |
+| Servis | IBildirimService, BildirimDto, BildirimService (Announcement tablosu, role filtreli); Program.cs'te kayıtlı |
+| Not | Okundu bilgisi `announcement_reads` tablosunda tutulur (DOCS/announcement_reads_table.sql) |
 
 ---
 
@@ -42,8 +42,8 @@ Bu doküman Faz 6 formlarının mevcut durumunu ve entegrasyon noktalarını öz
 |------|--------|
 | SablonDuzenleForm | ✅ ISablonService + ICompanySettingsService ile bağlandı – listeleme, kaydet, sil servisten |
 | WSTeklifleriniSorgulaForm | ✅ ISablonService + IWsSorguService ile bağlandı – şablon combo servisten, Sorgula IWsSorguService.SorgulaAsync |
-| Servis | ISablonService, IWsSorguService, SablonService (bellek), WsSorguService (stub); Program.cs'te kayıtlı |
-| Sonraki adım | WsSorguService gerçek WS/API entegrasyonu; SablonService istenirse DB'ye taşınabilir |
+| Servis | ISablonService, IWsSorguService, SablonService (bellek), WsSorguService (App.config WsSorguApiBaseUrl ile HTTP GET; boşsa örnek veri); Program.cs'te kayıtlı |
+| Sonraki adım | WsSorguService için endpoint/kimlik doğrulama bilgisi netleşince App.config doldurulur; SablonService istenirse DB'ye taşınabilir |
 
 ---
 

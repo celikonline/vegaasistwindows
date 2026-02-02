@@ -198,6 +198,9 @@ namespace VegaAsis.Windows.Forms
 
             var btnGiris = new Button { Text = "Giriş", Left = x, Top = 6, Width = 60, Height = 26, FlatStyle = FlatStyle.Flat };
             x += 66;
+            var btnTumuneGiris = new Button { Text = "Tümüne Giriş", Left = x, Top = 6, Width = 95, Height = 26, FlatStyle = FlatStyle.Flat };
+            btnTumuneGiris.Click += (s, e) => TumuneGiris();
+            x += 101;
             var btnBaslat = new Button { Text = "▶ Başlat", Left = x, Top = 6, Width = 85, Height = 26, FlatStyle = FlatStyle.Flat, ForeColor = VegaGreen };
             btnBaslat.Click += (s, e) => ShowBaslatMenu(btnBaslat);
             x += 91;
@@ -215,13 +218,17 @@ namespace VegaAsis.Windows.Forms
             };
             x += 61;
 
+            var btnKimlik = new Button { Text = "Kimlik Bilgileri", Left = x, Top = 6, Width = 100, Height = 26, FlatStyle = FlatStyle.Flat };
+            btnKimlik.Click += (s, e) => AcKimlikBilgileriForm();
+            x += 106;
+
             var btnPoliceKaydet = new Button { Text = "Poliçe Kaydet", Left = x, Top = 6, Width = 95, Height = 26, FlatStyle = FlatStyle.Flat };
             btnPoliceKaydet.Click += (s, e) => AcPoliceKaydetDialog();
             x += 101;
             var btnHataBildir = new Button { Text = "Hata Bildir", Left = x, Top = 6, Width = 85, Height = 26, FlatStyle = FlatStyle.Flat, ForeColor = VegaOrange };
             btnHataBildir.Click += (s, e) => AcHataBildirDialog();
 
-            _toolbarPanel.Controls.AddRange(new Control[] { btnGeri, btnIleri, btnYenile, btnHome, _txtUrl, btnGiris, btnBaslat, btnDuraklat, btnDurdur, btnYeni, btnPoliceKaydet, btnHataBildir });
+            _toolbarPanel.Controls.AddRange(new Control[] { btnGeri, btnIleri, btnYenile, btnHome, _txtUrl, btnGiris, btnTumuneGiris, btnBaslat, btnDuraklat, btnDurdur, btnYeni, btnKimlik, btnPoliceKaydet, btnHataBildir });
             Controls.Add(_toolbarPanel);
 
             var c0 = GetCompany(_activeCompanyId);
@@ -241,6 +248,9 @@ namespace VegaAsis.Windows.Forms
             menu.Items.Add("Chrome ile Aç", null, (s, e) => BaslatChrome());
             menu.Items.Add("Tümüne Giriş (sıralı)", null, (s, e) => TumuneGiris());
             menu.Items.Add("Tümünden Teklif Al", null, (s, e) => TumundenTeklifAl());
+            menu.Items.Add("Tümünden Teklif Al (Paralel)", null, (s, e) => TumundenTeklifAlParalel());
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Login Testi (Faz 4)", null, (s, e) => AcLoginTestForm());
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Trafik Sorgu", null, (s, e) => { _isRunning = true; _isPaused = false; MessageBox.Show("Trafik sorgu başlatıldı.", "Bilgi"); });
             menu.Items.Add("Kasko Sorgu", null, (s, e) => { _isRunning = true; _isPaused = false; MessageBox.Show("Kasko sorgu başlatıldı.", "Bilgi"); });
@@ -274,19 +284,15 @@ namespace VegaAsis.Windows.Forms
                 }
             }
             _isRunning = true;
-            List<string> companyIds = null;
+            ICompanySettingsService settings = null;
             try
             {
                 if (ServiceLocator.IsInitialized)
-                {
-                    var settings = ServiceLocator.Resolve<ICompanySettingsService>();
-                    if (settings != null) companyIds = await settings.GetSelectedCompaniesAsync().ConfigureAwait(true);
-                }
+                    settings = ServiceLocator.Resolve<ICompanySettingsService>();
             }
-            catch { /* seçili şirket servisi yoksa _companies kullanılır */ }
-            if (companyIds == null || companyIds.Count == 0)
-                companyIds = _companies.Select(c => c.Id).ToList();
-            var results = await AllLoginsRunner.RunAsync(_browserDriver, companyIds).ConfigureAwait(true);
+            catch { }
+            var fallbackIds = _companies.Select(c => c.Id).ToList();
+            var results = await AllLoginsRunner.RunAsync(_browserDriver, settings, fallbackIds).ConfigureAwait(true);
             _isRunning = false;
             var msg = results.Count > 0 ? string.Join("\r\n", results.Select(r => r.CompanyName + ": " + (r.Success ? "OK" : r.Message))) : "Şirket listesi boş.";
             MessageBox.Show("Tümüne Giriş özeti:\r\n" + msg, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -321,6 +327,46 @@ namespace VegaAsis.Windows.Forms
             _isRunning = false;
             var msg = results.Count > 0 ? string.Join("\r\n", results.Select(r => r.CompanyName + ": " + (r.LoginSuccess ? r.OfferResult : r.OfferResult))) : "Şirket listesi boş.";
             MessageBox.Show("Tümünden Teklif Al özeti:\r\n" + msg, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void TumundenTeklifAlParalel()
+        {
+            List<string> companyIds = null;
+            try
+            {
+                if (ServiceLocator.IsInitialized)
+                {
+                    var settings = ServiceLocator.Resolve<ICompanySettingsService>();
+                    if (settings != null) companyIds = await settings.GetSelectedCompaniesAsync().ConfigureAwait(true);
+                }
+            }
+            catch { }
+            if (companyIds == null || companyIds.Count == 0)
+                companyIds = _companies.Select(c => c.Id).ToList();
+            Guid? userId = null;
+            try
+            {
+                if (ServiceLocator.IsInitialized)
+                {
+                    var auth = ServiceLocator.Resolve<IAuthService>();
+                    if (auth != null) userId = auth.GetCurrentUserId;
+                }
+            }
+            catch { }
+            var offerParams = new { Plaka = "34ABC123", Tckn = "12345678901" };
+            _isRunning = true;
+            try
+            {
+                var results = await ParallelOfferRunner.RunAsync(companyIds, offerParams, userId, maxConcurrency: 3, headless: false).ConfigureAwait(true);
+                _isRunning = false;
+                var msg = results.Count > 0 ? string.Join("\r\n", results.Select(r => r.CompanyName + ": " + (r.LoginSuccess ? r.OfferResult : r.OfferResult))) : "Şirket listesi boş.";
+                MessageBox.Show("Paralel Teklif Al özeti:\r\n" + msg, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                _isRunning = false;
+                MessageBox.Show("Paralel teklif alınamadı: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void BaslatChrome()
@@ -358,6 +404,22 @@ namespace VegaAsis.Windows.Forms
             catch (Exception ex)
             {
                 MessageBox.Show("Chrome başlatılamadı: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void AcKimlikBilgileriForm()
+        {
+            using (var form = new SirketKimlikBilgileriForm())
+            {
+                form.ShowDialog(this);
+            }
+        }
+
+        private void AcLoginTestForm()
+        {
+            using (var form = new TRF_LoginTestForm())
+            {
+                form.ShowDialog(this);
             }
         }
 

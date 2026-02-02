@@ -16,8 +16,9 @@ namespace VegaAsis.Windows.Robot
         /// <param name="driver">Aktif tarayıcı sürücüsü.</param>
         /// <param name="companyIds">Şirket kodları.</param>
         /// <param name="offerParams">Teklif parametreleri (Plaka, Tckn vb.).</param>
+        /// <param name="userId">Credential için kullanıcı ID (TRF_Base robotlarına SetUserId ile geçirilir).</param>
         /// <returns>Her şirket için AllOfferResult.</returns>
-        public static async Task<List<AllOfferResult>> RunAsync(IBrowserDriver driver, IEnumerable<string> companyIds, object offerParams)
+        public static async Task<List<AllOfferResult>> RunAsync(IBrowserDriver driver, IEnumerable<string> companyIds, object offerParams, Guid? userId = null)
         {
             var results = new List<AllOfferResult>();
             if (driver == null || !driver.IsActive) return results;
@@ -30,6 +31,8 @@ namespace VegaAsis.Windows.Robot
                     results.Add(new AllOfferResult { CompanyId = companyId, CompanyName = companyId, LoginSuccess = false, OfferResult = "Robot bulunamadı." });
                     continue;
                 }
+                if (robot is TRF_Base trf)
+                    trf.SetUserId(userId);
                 try
                 {
                     var loginOk = await robot.LoginAsync(driver).ConfigureAwait(false);

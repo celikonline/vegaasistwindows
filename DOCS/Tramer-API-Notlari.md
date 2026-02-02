@@ -6,9 +6,9 @@ Bu doküman Tramer entegrasyonu için endpoint, format ve kimlik doğrulama bilg
 
 ## Özet
 
-- **ITramerService** ve **TramerService** (VegaAsis.Core / VegaAsis.Data) mevcut; şu an boş liste döndürüyor.
+- **ITramerService** ve **TramerService** (VegaAsis.Core / VegaAsis.Data) mevcut; App.config `TramerApiBaseUrl` boşsa boş liste döndürür.
 - **TramerSorguForm** ServiceLocator ile ITramerService kullanıyor; plaka veya şasi no ile sorgulama butonu bağlı.
-- Gerçek Tramer API çağrısı için aşağıdaki bilgiler netleştirilmeli.
+- Varsayılan varsayım: REST/JSON + HTTP GET; opsiyonel API key header desteklenir.
 
 ---
 
@@ -20,7 +20,7 @@ Bu doküman Tramer entegrasyonu için endpoint, format ve kimlik doğrulama bilg
 | **Protokol** | REST JSON, SOAP, form POST vb. | Bekleniyor |
 | **Plaka sorgusu** | Parametre adı (plaka, plate vb.), HTTP metodu (GET/POST) | Bekleniyor |
 | **Şasi no sorgusu** | Parametre adı (sasiNo, chassis vb.) | Bekleniyor |
-| **Kimlik doğrulama** | API key, Basic auth, token; nerede saklanacak (AppSettings, şifreli) | Bekleniyor |
+| **Kimlik doğrulama** | API key, Basic auth, token; nerede saklanacak (AppSettings, şifreli) | Varsayılan: `TramerApiKeyHeader` + `TramerApiKey` |
 | **Yanıt formatı** | JSON alanları (plaka, marka, model, hasar tarihi, şirket vb.) → TramerSonucDto eşlemesi | Bekleniyor |
 | **Hata / timeout** | HTTP timeout süresi, hata kodları | Bekleniyor |
 
@@ -30,7 +30,7 @@ Bu doküman Tramer entegrasyonu için endpoint, format ve kimlik doğrulama bilg
 
 - **Arayüz:** `VegaAsis.Core/Contracts/ITramerService.cs` – `SorgulaPlakaAsync(string plaka)`, `SorgulaSasiNoAsync(string sasiNo)`.
 - **DTO:** `VegaAsis.Core/DTOs/TramerSonucDto.cs` – Plaka, Marka, Model, HasarTarihi, Sirket, Aciklama.
-- **Implementasyon:** `VegaAsis.Data/Services/TramerService.cs` – TODO: AppSettings/Config’ten URL ve auth alınıp HTTP çağrısı eklenecek.
+- **Implementasyon:** `VegaAsis.Data/Services/TramerService.cs` – AppSettings `TramerApiBaseUrl` varsa HTTP GET ile çağrı yapar; opsiyonel header auth destekli (`TramerApiKeyHeader`, `TramerApiKey`).
 
 ---
 

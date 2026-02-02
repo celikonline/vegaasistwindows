@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VegaAsis.Core.DTOs;
@@ -10,5 +11,7 @@ namespace VegaAsis.Core.Contracts
     public interface IBildirimService
     {
         Task<IReadOnlyList<BildirimDto>> GetAllAsync();
+        Task<IReadOnlyList<BildirimDto>> GetAllByRoleAsync(string role, Guid? userId);
+        Task MarkAsReadAsync(Guid announcementId, Guid userId);
     }
 }

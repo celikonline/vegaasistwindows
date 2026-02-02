@@ -85,8 +85,8 @@
 | Öncelik | Konu | Açıklama |
 |---------|------|----------|
 | Yapılandırma | Tramer / UAVT API | App.config’te `TramerApiBaseUrl` ve `UavtApiBaseUrl` gerçek API adresleriyle doldurulacak |
-| Opsiyonel | WsSorguService | Gerçek WS/API entegrasyonu ile `WsSorguService.SorgulaAsync` doldurulabilir |
-| Opsiyonel | BildirimService | Bildirimler DB veya duyuru kaynağından beslenmek istenirse `BildirimService.GetAllAsync` güncellenir |
+| Opsiyonel | WsSorguService | App.config `WsSorguApiBaseUrl` girilirse HTTP GET çalışır; auth/header opsiyonel |
+| Opsiyonel | BildirimService | Bildirimler Announcement tablosundan besleniyor; rol filtreli ve okundu takibi `announcement_reads` ile |
 | Opsiyonel | SablonService | Şablonlar kalıcı saklanacaksa DB tablosu + SablonService EF ile yazılabilir |
 | Opsiyonel | Diğer formlar | İhtiyaç halinde ek formlara layout (anchor, font) tutarlılığı uygulanabilir |
 
@@ -97,6 +97,7 @@
 - **duyurular:** Duyuru servisi için tablo gerekli (Faz 2’de tanımlandı).
 - **offers.teklif_no:** Faz 2’de eklendi; migration veya `ALTER TABLE` gerekebilir.
 - **offer_attachments:** Teklif dosyaları için tablo; `DOCS/offer_attachments_table.sql` ile oluşturulur.
+- **announcement_reads:** Duyuru okundu bilgisi için tablo; `DOCS/announcement_reads_table.sql` ile oluşturulur.
 
 ---
 

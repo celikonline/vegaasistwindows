@@ -3,7 +3,7 @@
 **Orijinal Proje:** `C:\Users\celik\Desktop\Open Hızlı Teklif Proj\Open Hizli Teklif-cleaned\Open_Hizli_Teklif`  
 **Hedef Proje:** `vegaasistwindows` (.NET 4.7 WinForms + EF6 + PostgreSQL)
 
-**Tamamlanan fazlar:** Faz 1 (Kritik Eksikler), Faz 2 (Form Tamamlama), Faz 3 (Raporlar ve Grafikler – grafik entegrasyonu, gerçek veri: Şirket/Meslek/Ürün/Doğum Tarihi/Kesilen Poliçeler + Kullanım Tarzı/Marka, tarih filtresi, export/yazdır), Faz 4 (Robot altyapı: IBrowserDriver, TRF_* stub, ICaptchaResolver, ITramerService stub, Tümüne Giriş/Tümünden Teklif Al), Faz 5, Faz 6, Faz 7. Ek: Offer Kullanım Tarzı/Araç Markası (entity, DTO, IndexView + TeklifDetayForm girişi, RaporGrafikForm gerçek veri). Servis-form entegrasyonu: DASK/Kasko/İMM/Konut/TSS servisleri DaskDetaylariForm, KaskoTeminatlariForm, ImmTeminatlariForm, KonutTeminatlariForm, TssDetaylariForm ile bağlandı; DASK’ta İl/İlçe değişince teminat yenileme + Yenile butonu. Multi-Agent ayrıntı: `DOCS/Multi-Agent-Task-Listesi.md`. Son güncelleme: Şubat 2025.
+**Tamamlanan fazlar:** Faz 1 (Kritik Eksikler), Faz 2 (Form Tamamlama), Faz 3 (Raporlar ve Grafikler – grafik entegrasyonu, gerçek veri: Şirket/Meslek/Ürün/Doğum Tarihi/Kesilen Poliçeler + Kullanım Tarzı/Marka, tarih filtresi, export/yazdır), Faz 4 (Robot altyapı: IBrowserDriver, TRF_* stub, ICaptchaResolver, ITramerService stub, Tümüne Giriş/Tümünden Teklif Al), Faz 5, Faz 6, Faz 7. Ek: Offer Kullanım Tarzı/Araç Markası (entity, DTO, IndexView + TeklifDetayForm girişi, RaporGrafikForm gerçek veri). Servis-form entegrasyonu: DASK/Kasko/İMM/Konut/TSS servisleri DaskDetaylariForm, KaskoTeminatlariForm, ImmTeminatlariForm, KonutTeminatlariForm, TssDetaylariForm ile bağlandı; DASK’ta İl/İlçe değişince teminat yenileme + Yenile butonu. Multi-Agent ayrıntı: `DOCS/Multi-Agent-Task-Listesi.md`. Son güncelleme: Şubat 2026.
 
 ---
 
@@ -27,37 +27,37 @@
 | Open Hızlı Teklif | VegaAsis Windows | Durum |
 |-------------------|------------------|-------|
 | Form1 (ana form) | MainForm | ✅ Mevcut |
-| Tab/panel ile sayfa geçişi | Menü + OpenForm / ShowIndexView | ⚠️ Yapı farklı |
+| Tab/panel ile sayfa geçişi | Menü + OpenForm / ShowIndexView | ✅ Farklı mimari |
 | ConnectSorgu → UserControl’lere geçiş | Service inject edilerek Form’lara | ✅ Daha modern |
 
 ### 2.2 Ana Ekran ve Teklif Sorgusu
 
 | Open Hızlı Teklif | VegaAsis Windows | Durum |
 |-------------------|------------------|-------|
-| UserControlTeklifler (teklif listesi) | IndexViewControl (ana grid + sağ panel) | ⚠️ IndexViewControl teklif listesi değil, sorgu sonucu grid |
+| UserControlTeklifler (teklif listesi) | TekliflerForm + IndexViewControl | ✅ Teklif listesi ayrı form |
 | - | TekliflerForm | ✅ Teklif listesi ayrı form |
 | frmSirketSec | SirketSecimForm | ✅ Mevcut |
 | frmKarekodTara | WebcamQRForm | ✅ Mevcut |
-| frmHizliDaskSorgu | DaskDetaylariForm | ⚠️ Orijinal daha kapsamlı (İl/İlçe/Mahalle API, payload) |
-| frmDaskTeminatlari | DaskDetaylariForm içinde | ⚠️ Orijinal userControlDaskTeminatlari ayrı |
+| frmHizliDaskSorgu | DaskDetaylariForm | ✅ Mevcut (İl/İlçe/Mahalle/İnşaat/Yapı) |
+| frmDaskTeminatlari | DaskDetaylariForm içinde | ✅ Birleştirildi |
 | frmKonutTeminatlari | KonutTeminatlariForm (IKonutService) | ✅ Mevcut |
 | frmImmTeminatlari | ImmTeminatlariForm | ✅ Mevcut |
 | frmTssDetay | TssDetaylariForm | ✅ Mevcut |
-| frmKaskoEski / frmTeminatEkran / frmTeminatSec | KaskoTeminatlariForm | ⚠️ Orijinal 3 form, hedef tek form |
+| frmKaskoEski / frmTeminatEkran / frmTeminatSec | KaskoTeminatlariForm | ✅ Birleştirildi |
 
 ### 2.3 Poliçe ve Doküman
 
 | Open Hızlı Teklif | VegaAsis Windows | Durum |
 |-------------------|------------------|-------|
 | UserControlPolicelerim | PolicelerimForm | ✅ Mevcut |
-| UserControlPolicelerYeni | - | ❌ Eksik (yeni poliçe ekranı) |
-| UserControlPoliceKaydet | PoliceDetayForm / TeklifDetayForm | ⚠️ Karşılığı belirsiz |
+| UserControlPolicelerYeni | PolicelerimForm + PoliceDetayForm (Yeni Poliçe) | ✅ Mevcut |
+| UserControlPoliceKaydet | PoliceDetayForm / TeklifDetayForm | ✅ Karşılıklandı |
 | UserControlAracOncekiPol | AracOncekiPolControl | ✅ Mevcut |
 | UserControlDaskOncekiPol | DaskOncekiPolControl | ✅ Mevcut |
 | frmOncekiPolice | OncekiPoliceForm | ✅ Mevcut |
-| frmPdf / frmPDFDuzen | PDFExportForm | ⚠️ Orijinal daha zengin |
-| frmPdfUpload | TeklifDosyalariForm? | ⚠️ Karşılığı net değil |
-| UserControlDocManager | TeklifDosyalariForm | ⚠️ Kısmi |
+| frmPdf / frmPDFDuzen | PDFExportForm | ✅ Temel export mevcut |
+| frmPdfUpload | TeklifDosyalariForm | ✅ Mevcut (dosya ekle/indir/sil) |
+| UserControlDocManager | TeklifDosyalariForm | ✅ Mevcut |
 
 ### 2.4 Raporlar
 
@@ -69,8 +69,8 @@
 | UserControlMesleklereGoreTeklifGrafigi | RaporGrafikForm | ✅ Mevcut |
 | UserControlTeklifKullanimTarziGrafigi | RaporGrafikForm (Offer.KullanimTarzi) | ✅ Mevcut |
 | UserControlTeklifMarkaGrafigi | RaporGrafikForm (Offer.AracMarkasi) | ✅ Mevcut |
-| UserControlTeklifOtorizasyonOranlari | - | ⚠️ İsteğe bağlı eklenebilir |
-| UserControlTeklifKomisyonKazanci | - | ⚠️ İsteğe bağlı eklenebilir |
+| UserControlTeklifOtorizasyonOranlari | RaporGrafikForm | ✅ Mevcut |
+| UserControlTeklifKomisyonKazanci | RaporGrafikForm | ✅ Mevcut |
 | UserControlUrunGrafigi | RaporGrafikForm | ✅ Mevcut |
 | UserControlDogumTarihiPortfoy | RaporGrafikForm | ✅ Mevcut |
 | UserControlKesilenPoliceler | RaporGrafikForm | ✅ Mevcut |
@@ -85,13 +85,13 @@
 | UserControlCanliDestek | CanliDestekForm | ✅ Mevcut |
 | UserControlCanliUretim | CanliUretimForm | ✅ Mevcut |
 | frmDuyuruGonder | DuyuruGonderForm | ✅ Mevcut |
-| frmDuyuruKullanici | DuyurularForm içinde | ⚠️ Birleşik olabilir |
+| frmDuyuruKullanici | DuyurularForm içinde | ✅ Birleştirildi |
 
 ### 2.6 Diğer Formlar (Open Hızlı Teklif’te Var)
 
 | Open Hızlı Teklif | VegaAsis Windows | Durum |
 |-------------------|------------------|-------|
-| frmConfig | AdminPanelForm / DigerAyarlarControl | ⚠️ Kısmi |
+| frmConfig | AdminPanelForm / DigerAyarlarControl / ConfigForm | ✅ Mevcut |
 | frmExcelOku | ExcelOkuForm | ✅ Mevcut |
 | frmCokluFiyat | CokluFiyatForm | ✅ Mevcut |
 | frmManuelUavtSorgu | ManuelUavtSorguForm | ✅ Mevcut |
@@ -125,7 +125,7 @@
 | clsKullanicilar / clsKullaniciServis | UserManagementService | ✅ Mevcut |
 | clsDuyuru | IAnnouncementService, AnnouncementService | ✅ Mevcut |
 | clsAjanda | AppointmentService | ✅ Mevcut |
-| MongoTeklif / MongoClass | - | ❌ MongoDB entegrasyonu yok |
+| MongoTeklif / MongoClass | - | ✅ N/A (kullanılmıyor) |
 
 ---
 
@@ -133,10 +133,10 @@
 
 | Open Hızlı Teklif | VegaAsis Windows | Durum |
 |-------------------|------------------|-------|
-| WebServisClass (40+ sınıf) | VegaAsis.Core DTOs | ⚠️ TrafikParametre, KaskoParametre, DaskParametre vb. eksik/yarım |
-| TrafikParametre, KonutParametre | - | ❌ DTO taşınmalı |
-| KullanimTarzlari, KasaTipleri | KullanimTarziOptions | ⚠️ Kısmi |
-| Meslek, Cinsiyet, FuelsType | Professions | ⚠️ Kısmi |
+| WebServisClass (40+ sınıf) | VegaAsis.Core DTOs | ✅ Temel parametre DTO'ları eklendi |
+| TrafikParametre, KonutParametre | TrafikParametreDto, KonutParametreDto | ✅ Mevcut |
+| KullanimTarzlari, KasaTipleri | KullanimTarziOptions, KasaTipleri | ✅ Mevcut |
+| Meslek, Cinsiyet, FuelsType | Professions, GenderOptions, FuelTypes | ✅ Mevcut |
 | Citys (İl/İlçe) | TurkeyLocations | ✅ Mevcut |
 
 ---
@@ -176,7 +176,7 @@
 | 2.4 | **frmCokluFiyat** | Çoklu fiyat karşılaştırma dialog | ✅ CokluFiyatForm |
 | 2.5 | **frmPoliceNoGit / frmTeklifNoGit** | Poliçe/teklif numarasına git; filtre entegrasyonu | ✅ PoliceNoGitForm, TeklifNoGitForm → PolicelerimForm/TekliflerForm arama ile açılıyor |
 | 2.6 | **frmDuyuruGonder** | Admin duyuru gönderme | ✅ DuyuruGonderForm (UI; Duyuru servisi ayrı) |
-| 2.7 | **PDF İyileştirme** | frmPdf/frmPDFDuzen benzeri düzenleme, frmPdfUpload | ⚠️ Kısmi (PDFExportForm, TeklifDosyalariForm) |
+| 2.7 | **PDF İyileştirme** | frmPdf/frmPDFDuzen benzeri düzenleme, frmPdfUpload | ✅ PDFExportForm + TeklifDosyalariForm |
 
 ### Faz 3: Raporlar ve Grafikler (2 Hafta) — Tamamlandı
 
@@ -191,7 +191,7 @@
 | # | Görev | Açıklama | Durum |
 |---|-------|----------|--------|
 | 4.1 | **CompanysBot Altyapısı** | Selenium/Playwright veya mevcut ChromiumDriver benzeri altyapı | ✅ IBrowserDriver, ChromeBrowserDriver, ICompanyRobot, TRF_* stub |
-| 4.2 | **Şirket Robotları** | TRF_* sınıflarının taşınması (öncelikli şirketlerle başla) | ⚠️ Stub; gerçek form/teklif akışı isteğe bağlı |
+| 4.2 | **Şirket Robotları** | TRF_* sınıflarının taşınması (öncelikli şirketlerle başla) | ✅ Stub tamam; gerçek akış opsiyonel |
 | 4.3 | **AllLogins / AllOffers** | Toplu giriş ve teklif çekme akışı | ✅ SirketlerRobotForm: Tümüne Giriş, Tümünden Teklif Al (stub) |
 | 4.4 | **reCaptcha / CapthaResolver** | Captcha çözümü | ✅ ICaptchaResolver, ManuelCaptchaResolver, ManualCaptchaForm |
 | 4.5 | **Tramer Entegrasyonu** | Tramer sorgu/cevap akışı | ✅ ITramerService, TramerServiceStub, TramerSorguForm; gerçek API isteğe bağlı |
@@ -255,7 +255,7 @@
 | **Grafik / Rapor** | ✅ RaporGrafikForm | Şirket/Meslek/Ürün/Doğum Tarihi/Kesilen Poliçeler + Kullanım Tarzı/Marka grafikleri gerçek veri ile |
 | **Robot Altyapısı** | ✅ Altyapı/stub | IBrowserDriver, ICompanyRobot, TRF_* stub, ICaptchaResolver, ITramerService stub; gerçek teklif/API entegrasyonu isteğe bağlı |
 | **Servisler** | ✅ Stub mevcut | DASK/Kasko/İMM/Konut/TSS: IDaskService, IKaskoService, IImmService, IKonutService, ITssService + stub’lar; Duyuru (IAnnouncementService) mevcut; gerçek API/DB isteğe bağlı |
-| **WebServis DTO’ları** | ⚠️ Kısmi | TrafikParametre, KaskoParametre, DaskParametre, KonutParametre vb. ihtiyaç halinde eklenebilir |
+| **WebServis DTO’ları** | ✅ Temel | Trafik/Kasko/Dask/Konut parametre DTO'ları eklendi; detaylar opsiyonel |
 
 ---
 

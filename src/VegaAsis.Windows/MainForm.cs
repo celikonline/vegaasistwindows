@@ -18,6 +18,7 @@ namespace VegaAsis.Windows
         private readonly ICompanySettingsService _companySettingsService;
         private readonly IUserManagementService _userManagementService;
         private Panel _contentPanel;
+        private UserControls.IndexViewControl _indexControl;
 
         public MainForm(
             IAuthService authService,
@@ -51,23 +52,27 @@ namespace VegaAsis.Windows
         private void ShowIndexView()
         {
             _contentPanel.Controls.Clear();
-            var indexControl = new UserControls.IndexViewControl();
-            indexControl.Dock = DockStyle.Fill;
-            indexControl.SbmSorgusuRequested += (s, e) => OpenForm(new SbmSorgusuForm());
-            indexControl.KuyrukSorgusuRequested += (s, e) => OpenForm(new KuyrukSorgusuForm());
-            indexControl.WebcamQRRequested += (s, e) => OpenForm(new WebcamQRForm());
-            indexControl.SirketEkleRequested += (s, e) => OpenSirketSecim();
-            indexControl.AdminPanelRequested += (s, e) => OpenForm(new AdminPanelForm(_companySettingsService, _userManagementService, _authService));
-            indexControl.TekliflerRequested += (s, e) => OpenForm(new TekliflerForm(_authService, _offerService));
-            indexControl.PolicelerimRequested += (s, e) => OpenForm(new PolicelerimForm(_policyService));
-            indexControl.SirketlerRobotRequested += (s, e) => OpenForm(new SirketlerRobotForm());
-            indexControl.RaporlarRequested += (s, e) => OpenForm(new RaporlarForm(_offerService, _policyService));
-            indexControl.DestekTalepleriRequested += (s, e) => OpenForm(new DestekTalepleriForm());
-            indexControl.AjandaYenilemeRequested += (s, e) => OpenForm(new AjandaYenilemeForm(_appointmentService));
-            indexControl.DuyurularRequested += (s, e) => OpenForm(new DuyurularForm());
-            indexControl.CanliUretimRequested += (s, e) => OpenForm(new CanliUretimForm());
-            indexControl.CanliDestekRequested += (s, e) => OpenForm(new CanliDestekForm());
-            indexControl.BranchCellClickRequested += (s, e) =>
+            _indexControl = new UserControls.IndexViewControl();
+            _indexControl.Dock = DockStyle.Fill;
+            _indexControl.SbmSorgusuRequested += (s, e) => OpenForm(new SbmSorgusuForm());
+            _indexControl.KuyrukSorgusuRequested += (s, e) => OpenForm(new KuyrukSorgusuForm());
+            _indexControl.WebcamQRRequested += (s, e) => OpenForm(new WebcamQRForm());
+            _indexControl.SirketEkleRequested += (s, e) => OpenSirketSecim();
+            _indexControl.AdminPanelRequested += (s, e) => OpenForm(new AdminPanelForm(_companySettingsService, _userManagementService, _authService));
+            _indexControl.TekliflerRequested += (s, e) => OpenForm(new TekliflerForm(_authService, _offerService));
+            _indexControl.PolicelerimRequested += (s, e) => OpenForm(new PolicelerimForm(_policyService));
+            _indexControl.SirketlerRobotRequested += (s, e) => OpenForm(new SirketlerRobotForm());
+            _indexControl.RaporlarRequested += (s, e) => OpenForm(new RaporlarForm(_offerService, _policyService));
+            _indexControl.DestekTalepleriRequested += (s, e) => OpenForm(new DestekTalepleriForm());
+            _indexControl.AjandaYenilemeRequested += (s, e) => OpenForm(new AjandaYenilemeForm(_appointmentService));
+            _indexControl.DuyurularRequested += (s, e) =>
+            {
+                OpenForm(new DuyurularForm());
+                var _ = _indexControl.RefreshDuyuruBadgeAsync();
+            };
+            _indexControl.CanliUretimRequested += (s, e) => OpenForm(new CanliUretimForm());
+            _indexControl.CanliDestekRequested += (s, e) => OpenForm(new CanliDestekForm());
+            _indexControl.BranchCellClickRequested += (s, e) =>
             {
                 var branch = e.Branch;
                 var company = e.CompanyName;
@@ -85,9 +90,9 @@ namespace VegaAsis.Windows
                     OpenForm(form);
                 }
             };
-            indexControl.PdfExportRequested += (s, e) => OpenForm(new PDFExportForm());
-            indexControl.PdfUploadRequested += (s, e) => OpenPdfUpload();
-            indexControl.SorguBaslatRequested += (s, ev) =>
+            _indexControl.PdfExportRequested += (s, e) => OpenForm(new PDFExportForm());
+            _indexControl.PdfUploadRequested += (s, e) => OpenPdfUpload();
+            _indexControl.SorguBaslatRequested += (s, ev) =>
             {
                 var idx = s as UserControls.IndexViewControl;
                 if (idx == null) return;
@@ -122,9 +127,9 @@ namespace VegaAsis.Windows
                     MessageBox.Show("Hata: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
-            indexControl.DuraklatRequested += (s, ev) => { };
-            indexControl.YeniSorguKaydetRequested += (s, ev) => MessageBox.Show("Yeni sorgu hazır. Form alanları temizlendi.", "Yeni Sorgu", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            _contentPanel.Controls.Add(indexControl);
+            _indexControl.DuraklatRequested += (s, ev) => { };
+            _indexControl.YeniSorguKaydetRequested += (s, ev) => MessageBox.Show("Yeni sorgu hazır. Form alanları temizlendi.", "Yeni Sorgu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            _contentPanel.Controls.Add(_indexControl);
         }
 
         private void OpenForm(Form form)
@@ -167,14 +172,11 @@ namespace VegaAsis.Windows
 
         private void OpenPdfUpload()
         {
-            using (var dlg = new OpenFileDialog())
+            using (var input = new TeklifNoGitForm())
             {
-                dlg.Filter = "PDF Dosyaları (*.pdf)|*.pdf|Tüm Dosyalar (*.*)|*.*";
-                dlg.Title = "PDF Yükle";
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                {
-                    ShowInfo("Seçilen dosya: " + dlg.FileName, "PDF Yükle");
-                }
+                if (input.ShowDialog(this) != DialogResult.OK || string.IsNullOrEmpty(input.TeklifNo))
+                    return;
+                OpenForm(new TeklifDosyalariForm(input.TeklifNo));
             }
         }
 

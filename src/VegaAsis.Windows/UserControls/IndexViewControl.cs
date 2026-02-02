@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
+using VegaAsis.Core.Contracts;
 using VegaAsis.Windows.Data;
 using VegaAsis.Windows.Forms;
 using VegaAsis.Windows.Models;
@@ -32,6 +35,8 @@ namespace VegaAsis.Windows.UserControls
         private Panel _selectedCompanyPanel;
         private List<CompanyRow> _companyData;
         private Button _btnDuraklat;
+        private Button _btnDuyurular;
+        private Color _duyuruDefaultForeColor;
         private SorguSession _sorguSession = new SorguSession();
         private readonly Dictionary<string, Control> _formFields = new Dictionary<string, Control>();
 
@@ -81,7 +86,11 @@ namespace VegaAsis.Windows.UserControls
             BuildToolbar();
             BuildMainContent();
             BuildStatusBar();
-            Load += (s, e) => LoadCompanyData();
+            Load += async (s, e) =>
+            {
+                LoadCompanyData();
+                await RefreshDuyuruBadgeAsync().ConfigureAwait(true);
+            };
 
             ResumeLayout(true);
         }
@@ -332,8 +341,9 @@ namespace VegaAsis.Windows.UserControls
             var company = tag.Company;
 
             var activeBranch = _cmbPolicyType?.SelectedItem as string;
-            var unavailable = company.UnavailableBranches != null && !string.IsNullOrEmpty(activeBranch) &&
-                company.UnavailableBranches.Any(b => string.Equals(b, activeBranch, StringComparison.OrdinalIgnoreCase));
+            var branchKey = GetBranchKeyFromCombo(activeBranch);
+            var unavailable = company.UnavailableBranches != null && !string.IsNullOrEmpty(branchKey) &&
+                company.UnavailableBranches.Any(b => string.Equals(b, branchKey, StringComparison.OrdinalIgnoreCase));
 
             if (_companyGrid.Columns["Sirket"] != null && e.ColumnIndex == _companyGrid.Columns["Sirket"].Index)
             {
@@ -372,6 +382,14 @@ namespace VegaAsis.Windows.UserControls
                 case "Imm": return "İMM";
                 default: return null;
             }
+        }
+
+        /// <summary>Combo'daki teklif türü metnini backend branch anahtarına çevirir (TSS Ayak./TSS Yat. -> TSS).</summary>
+        private static string GetBranchKeyFromCombo(string comboItem)
+        {
+            if (string.IsNullOrEmpty(comboItem)) return null;
+            if (comboItem.IndexOf("TSS", StringComparison.OrdinalIgnoreCase) >= 0) return "TSS";
+            return comboItem;
         }
 
         private void CompanyGrid_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
@@ -600,6 +618,11 @@ namespace VegaAsis.Windows.UserControls
             {
                 var (text, icon, handler) = navDefs[i];
                 var btn = CreateNavButton(text, i == 0, icon);
+                if (string.Equals(text, "Duyurular", StringComparison.OrdinalIgnoreCase))
+                {
+                    _btnDuyurular = btn;
+                    _duyuruDefaultForeColor = btn.ForeColor;
+                }
                 if (handler != null) btn.Click += handler;
                 navFlow.Controls.Add(btn);
             }
@@ -694,6 +717,32 @@ namespace VegaAsis.Windows.UserControls
             }
             btn.FlatAppearance.BorderSize = 0;
             return btn;
+        }
+
+        public async Task RefreshDuyuruBadgeAsync()
+        {
+            if (_btnDuyurular == null) return;
+            try
+            {
+                if (!ServiceLocator.IsInitialized)
+                {
+                    _btnDuyurular.Text = "Duyurular";
+                    return;
+                }
+                var auth = ServiceLocator.Resolve<IAuthService>();
+                var role = auth?.GetCurrentProfile()?.Role;
+                var userId = auth?.GetCurrentUserId;
+                var service = ServiceLocator.Resolve<IBildirimService>();
+                var list = await service.GetAllByRoleAsync(role, userId).ConfigureAwait(true);
+                var unread = list == null ? 0 : list.Count(x => !x.IsRead);
+                _btnDuyurular.Text = unread > 0 ? "Duyurular (" + unread + ")" : "Duyurular";
+                _btnDuyurular.ForeColor = unread > 0 ? VegaRed : _duyuruDefaultForeColor;
+            }
+            catch
+            {
+                _btnDuyurular.Text = "Duyurular";
+                _btnDuyurular.ForeColor = _duyuruDefaultForeColor;
+            }
         }
 
         private void BuildToolbar()
@@ -920,31 +969,49 @@ namespace VegaAsis.Windows.UserControls
             sorguBaslatBar.Controls.Add(lblSearchIcon);
             sorguBaslatBar.Controls.Add(lblSorguBaslat);
             headerPanel.Controls.Add(sorguBaslatBar);
-            var lblTrafik = new Label { Text = "TRAFİK", AutoSize = true, Location = new Point(8, 42), Font = new Font("Segoe UI", 8F) };
+
+            // Teklif türü: trafik ışığı ikonu + combo (TRAFİK, KASKO, Konut, Dask, İMM, TSS Ayak., TSS Yat.)
+            var lblTeklifTuru = new Label { Text = "Teklif türü", AutoSize = true, Location = new Point(8, 42), Font = new Font("Segoe UI", 8F) };
+            var trafficLightPanel = new Panel
+            {
+                Size = new Size(22, 52),
+                Location = new Point(8, 58),
+                BackColor = Color.Transparent
+            };
+            trafficLightPanel.Paint += (s, ev) =>
+            {
+                var g = ev.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                int cx = 11;
+                int r = 5;
+                g.FillEllipse(Brushes.Red, cx - r, 4, r * 2, r * 2);
+                g.FillEllipse(Brushes.Orange, cx - r, 20, r * 2, r * 2);
+                g.FillEllipse(Brushes.LimeGreen, cx - r, 36, r * 2, r * 2);
+            };
             _cmbPolicyType = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 140,
+                Width = 118,
                 Height = 24,
-                Location = new Point(8, 62),
+                Location = new Point(36, 62),
                 FlatStyle = FlatStyle.Standard,
                 BackColor = Color.White,
                 Font = new Font("Segoe UI", 9F)
             };
-            _cmbPolicyType.Items.AddRange(new object[] { "TRAFİK", "KASKO", "DASK", "TSS", "KONUT", "İMM" });
+            _cmbPolicyType.Items.AddRange(new object[] { "TRAFİK", "KASKO", "TSS Ayak.", "TSS Yat.", "KONUT", "DASK", "İMM" });
             _cmbPolicyType.SelectedIndex = 0;
             _cmbPolicyType.SelectedIndexChanged += (s, e) =>
             {
                 _companyGrid?.Invalidate();
                 RefreshSelectedCompanyPanel();
             };
-            var lblTarayici = new Label { Text = "Tarayıcı 1", AutoSize = true, Location = new Point(160, 42), Font = new Font("Segoe UI", 8F) };
+            var lblTarayici = new Label { Text = "Tarayıcı 1", AutoSize = true, Location = new Point(162, 42), Font = new Font("Segoe UI", 8F) };
             _cmbTarayici = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Width = 120,
                 Height = 24,
-                Location = new Point(156, 62),
+                Location = new Point(160, 62),
                 BackColor = Color.FromArgb(255, 230, 230),
                 FlatStyle = FlatStyle.Standard,
                 Font = new Font("Segoe UI", 9F)
@@ -952,7 +1019,8 @@ namespace VegaAsis.Windows.UserControls
             _cmbTarayici.Items.Add("Tarayıcı 1");
             _cmbTarayici.Items.Add("Tarayıcı 2");
             _cmbTarayici.SelectedIndex = 0;
-            headerPanel.Controls.Add(lblTrafik);
+            headerPanel.Controls.Add(lblTeklifTuru);
+            headerPanel.Controls.Add(trafficLightPanel);
             headerPanel.Controls.Add(_cmbPolicyType);
             headerPanel.Controls.Add(lblTarayici);
             headerPanel.Controls.Add(_cmbTarayici);

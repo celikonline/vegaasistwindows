@@ -17,8 +17,21 @@ namespace VegaAsis.Data.Services
     {
         private static string GetBaseUrl()
         {
-            var url = ConfigurationManager.AppSettings["UavtApiBaseUrl"];
-            return string.IsNullOrWhiteSpace(url) ? null : url.Trim();
+            return GetConfigString("UavtApiBaseUrl");
+        }
+
+        private static string GetConfigString(string key)
+        {
+            var v = ConfigurationManager.AppSettings[key];
+            return string.IsNullOrWhiteSpace(v) ? null : v.Trim();
+        }
+
+        private static int GetConfigInt(string key, int defaultValue)
+        {
+            var v = ConfigurationManager.AppSettings[key];
+            if (string.IsNullOrWhiteSpace(v)) return defaultValue;
+            int i;
+            return int.TryParse(v.Trim(), out i) && i > 0 ? i : defaultValue;
         }
 
         public async Task<IReadOnlyList<UavtSonucDto>> SorgulaTcVergiAsync(string tcVergi)
@@ -53,7 +66,15 @@ namespace VegaAsis.Data.Services
             {
                 using (var client = new HttpClient())
                 {
-                    client.Timeout = TimeSpan.FromSeconds(30);
+                    var timeoutSeconds = GetConfigInt("UavtTimeoutSeconds", 30);
+                    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+                    var apiKey = GetConfigString("UavtApiKey");
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        var header = GetConfigString("UavtApiKeyHeader") ?? "X-API-KEY";
+                        client.DefaultRequestHeaders.Remove(header);
+                        client.DefaultRequestHeaders.Add(header, apiKey);
+                    }
                     var response = await client.GetAsync(url).ConfigureAwait(false);
                     response.EnsureSuccessStatusCode();
                     var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
